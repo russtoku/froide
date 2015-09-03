@@ -17,5 +17,10 @@ install:
 script:
   - export DATABASE_URL=postgres://postgres@127.0.0.1/froide
   - make test
-after_success:
-  - coveralls
+
+branches:
+  only:
+    - master
+
+notifications:
+  webhooks: http://pm.codeforhawaii.org/projects/45ccea1a-302d-42fa-a3b5-2cf7b3a599bc/status
