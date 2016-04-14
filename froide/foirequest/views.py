@@ -12,6 +12,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext_lazy as _
+from django.utils.http import is_safe_url
 from django.http import Http404, HttpResponse
 from django.template.defaultfilters import slugify
 from django.contrib import messages
@@ -38,6 +39,9 @@ from .forms import (RequestForm, ConcreteLawForm, TagFoiRequestForm,
 from .feeds import LatestFoiRequestsFeed, LatestFoiRequestsFeedAtom
 from .tasks import process_mail
 from .foi_mail import package_foirequest
+from .hooks import registry
+from .utils import check_throttle
+
 
 X_ACCEL_REDIRECT_PREFIX = getattr(settings, 'X_ACCEL_REDIRECT_PREFIX', '')
 User = get_user_model()
@@ -83,7 +87,7 @@ def dashboard(request):
     if request.GET.get('notsameas'):
         foi_query = foi_query.filter(same_as__isnull=True)
     if request.GET.get('public'):
-        foi_query = foi_query.filter(public=True)
+        foi_query = foi_query.filter(visibility=FoiRequest.VISIBLE_TO_PUBLIC)
     for u in foi_query:
         d = u.first_message.date().isoformat()
         foirequest.setdefault(d, 0)
@@ -165,6 +169,10 @@ def list_requests(request, status=None, topic=None, tag=None,
 
     page = request.GET.get('page')
     paginator = Paginator(foi_requests, 20)
+
+    if request.GET.get('all') is not None:
+        if count <= 500:
+            paginator = Paginator(foi_requests, count)
     try:
         foi_requests = paginator.page(page)
     except PageNotAnInteger:
@@ -313,7 +321,8 @@ def make_request(request, public_body=None, public_body_id=None):
         public_body_form = PublicBodyForm()
     initial = {
         "subject": request.GET.get("subject", ""),
-        "reference": request.GET.get('ref', '')
+        "reference": request.GET.get('ref', ''),
+        "redirect_url": request.GET.get('redirect', '')
     }
     if 'body' in request.GET:
         initial['body'] = request.GET['body']
@@ -327,7 +336,8 @@ def make_request(request, public_body=None, public_body_id=None):
             _('You need to setup a default FOI Law object'))
         return render(request, '500.html')
 
-    rq_form = RequestForm(all_laws, default_law, True, initial=initial)
+    rq_form = RequestForm(user=request.user, list_of_laws=all_laws,
+                          default_law=default_law, initial=initial)
     user_form = None
     if not request.user.is_authenticated():
         user_form = NewUserForm()
@@ -343,7 +353,7 @@ def make_request(request, public_body=None, public_body_id=None):
 @require_POST
 def submit_request(request, public_body=None):
     error = False
-    foilaw = None
+    foi_law = None
     if public_body is not None:
         public_body = get_object_or_404(PublicBody,
                 slug=public_body)
@@ -354,8 +364,10 @@ def submit_request(request, public_body=None):
         all_laws = FoiLaw.objects.all()
     context = {"public_body": public_body}
 
-    request_form = RequestForm(all_laws, FoiLaw.get_default_law(),
-            True, request.POST)
+    request_form = RequestForm(user=request.user,
+                               list_of_laws=all_laws,
+                               default_law=FoiLaw.get_default_law(),
+                               data=request.POST)
     context['request_form'] = request_form
     context['public_body_form'] = PublicBodyForm()
     if (public_body is None and
@@ -390,54 +402,60 @@ def submit_request(request, public_body=None):
     else:
         user = request.user
 
-    if not error:
-        password = None
-        if user is None:
-            user, password = AccountManager.create_user(**user_form.cleaned_data)
-        sent_to_pb = 1
-        if public_body is not None and public_body.pk is None:
-            public_body._created_by = user
-            public_body.save()
-            sent_to_pb = 2
-        elif public_body is None:
-            sent_to_pb = 0
+    if error:
+        messages.add_message(request, messages.ERROR,
+            _('There were errors in your form submission. Please review and submit again.'))
+        return render(request, 'foirequest/request.html', context, status=400)
 
-        if foilaw is None:
-            if public_body is not None:
-                foilaw = public_body.default_law
-            else:
-                foilaw = request_form.foi_law
+    password = None
+    if user is None:
+        user, password = AccountManager.create_user(**user_form.cleaned_data)
+    sent_to_pb = 1
+    if public_body is not None and public_body.pk is None:
+        public_body._created_by = user
+        public_body.save()
+        sent_to_pb = 2
+    elif public_body is None:
+        sent_to_pb = 0
 
-        foi_request = FoiRequest.from_request_form(
-                user,
-                public_body,
-                foilaw,
-                form_data=request_form.cleaned_data,
-                post_data=request.POST
-        )
-
-        if user.is_active:
-            if sent_to_pb == 0:
-                messages.add_message(request, messages.INFO,
-                    _('Others can now suggest the Public Bodies for your request.'))
-            elif sent_to_pb == 2:
-                messages.add_message(request, messages.INFO,
-                    _('Your request will be sent as soon as the newly created Public Body was confirmed by an administrator.'))
-
-            else:
-                messages.add_message(request, messages.INFO,
-                    _('Your request has been sent.'))
-            return redirect(u'%s%s' % (foi_request.get_absolute_url(), _('?request-made')))
+    if foi_law is None:
+        if public_body is not None:
+            foi_law = public_body.default_law
         else:
-            AccountManager(user).send_confirmation_mail(request_id=foi_request.pk,
-                    password=password)
+            foi_law = request_form.foi_law
+
+    kwargs = registry.run_hook('pre_request_creation', request,
+        user=user,
+        public_body=public_body,
+        foi_law=foi_law,
+        form_data=request_form.cleaned_data,
+        post_data=request.POST
+    )
+    foi_request = FoiRequest.from_request_form(**kwargs)
+
+    if user.is_active:
+        if sent_to_pb == 0:
             messages.add_message(request, messages.INFO,
-                    _('Please check your inbox for mail from us to confirm your mail address.'))
-            # user cannot access the request yet!
-            return redirect("/")
-    messages.add_message(request, messages.ERROR,
-        _('There were errors in your form submission. Please review and submit again.'))
-    return render(request, 'foirequest/request.html', context, status=400)
+                _('Others can now suggest the Public Bodies for your request.'))
+        elif sent_to_pb == 2:
+            messages.add_message(request, messages.INFO,
+                _('Your request will be sent as soon as the newly created Public Body was confirmed by an administrator.'))
+
+        else:
+            messages.add_message(request, messages.INFO,
+                _('Your request has been sent.'))
+        if request_form.cleaned_data['redirect_url']:
+            redirect_url = request_form.cleaned_data['redirect_url']
+            if is_safe_url(redirect_url):
+                return redirect(redirect_url)
+        return redirect(u'%s%s' % (foi_request.get_absolute_url(), _('?request-made')))
+    else:
+        AccountManager(user).send_confirmation_mail(request_id=foi_request.pk,
+                password=password)
+        messages.add_message(request, messages.INFO,
+                _('Please check your inbox for mail from us to confirm your mail address.'))
+        # user cannot access the request yet!
+        return redirect("/")
 
 
 @require_POST
@@ -460,6 +478,11 @@ def set_public_body(request, slug):
     if not foirequest.needs_public_body():
         messages.add_message(request, messages.ERROR,
             _("This request doesn't need a Public Body!"))
+        return render_400(request)
+
+    throttle_message = check_throttle(request.user, FoiRequest)
+    if throttle_message:
+        messages.add_message(request, messages.ERROR, throttle_message)
         return render_400(request)
 
     foilaw = public_body.default_law
@@ -815,19 +838,29 @@ def make_same_request(request, slug, message_id):
             messages.add_message(request, messages.ERROR,
                 _("You already made an identical request"))
             return render_400(request)
+
+    throttle_message = check_throttle(request.user, FoiRequest)
+    if throttle_message:
+        messages.add_message(request, messages.ERROR, throttle_message)
+        return render_400(request)
+
     body = u"%s\n\n%s" % (foirequest.description,
             _('Please see this request on %(site_name)s where you granted access to this information: %(url)s') % {
                 'url': foirequest.get_absolute_domain_short_url(),
                 'site_name': settings.SITE_NAME
             })
-    fr = FoiRequest.from_request_form(
-        user, foirequest.public_body,
-        foirequest.law,
+
+    kwargs = registry.run_hook('pre_request_creation', request,
+        user=user,
+        public_body=foirequest.public_body,
+        foi_law=foirequest.law,
         form_data=dict(
             subject=foirequest.title,
             body=body,
             public=foirequest.public
-        ))  # Don't pass post_data, get default letter of law
+        )  # Don't pass post_data, get default letter of law
+    )
+    fr = FoiRequest.from_request_form(**kwargs)
     fr.same_as = foirequest
     fr.save()
     if user.is_active:

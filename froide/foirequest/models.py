@@ -75,6 +75,9 @@ class FoiRequestManager(CurrentSiteManager):
             )
         )
 
+    def get_throttle_filter(self, user):
+        return self.get_queryset().filter(user=user), 'first_message'
+
 
 class PublishedFoiRequestManager(CurrentSiteManager):
     def get_queryset(self):
@@ -176,7 +179,7 @@ class FoiRequest(models.Model):
     RESOLUTION_CHOICES = (
         ('successful',
             _('Request Successful'),
-            _('The request has been successul.'),
+            _('The request has been successful.'),
             True
         ),
         ('partially_successful',
@@ -247,10 +250,14 @@ class FoiRequest(models.Model):
     })
     USER_STATUS_CHOICES = [(x[0], x[1]) for x in STATUS_RESOLUTION if x[3]]
 
+    INVISIBLE = 0
+    VISIBLE_TO_REQUESTER = 1
+    VISIBLE_TO_PUBLIC = 2
+
     VISIBILITY_CHOICES = (
-        (0, _("Invisible")),
-        (1, _("Visible to Requester")),
-        (2, _("Public")),
+        (INVISIBLE, _("Invisible")),
+        (VISIBLE_TO_REQUESTER, _("Visible to Requester")),
+        (VISIBLE_TO_PUBLIC, _("Public")),
     )
 
     # model fields
@@ -288,6 +295,8 @@ class FoiRequest(models.Model):
             db_index=True, unique=True)
     secret = models.CharField(_("Secret"), blank=True, max_length=100)
 
+    reference = models.CharField(_("Reference"), blank=True, max_length=255)
+
     same_as = models.ForeignKey('self', null=True, blank=True,
             on_delete=models.SET_NULL,
             verbose_name=_("Identical request"))
@@ -300,6 +309,7 @@ class FoiRequest(models.Model):
     refusal_reason = models.CharField(_("Refusal reason"), max_length=1024,
             blank=True)
     checked = models.BooleanField(_("checked"), default=False)
+    is_blocked = models.BooleanField(_("Blocked"), default=False)
     is_foi = models.BooleanField(_("is FoI request"), default=True)
 
     jurisdiction = models.ForeignKey(Jurisdiction, verbose_name=_('Jurisdiction'),
@@ -315,7 +325,7 @@ class FoiRequest(models.Model):
     tags = TaggableManager(through=TaggedFoiRequest, blank=True)
 
     class Meta:
-        ordering = ('last_message',)
+        ordering = ('-last_message',)
         get_latest_by = 'last_message'
         verbose_name = _('Freedom of Information Request')
         verbose_name_plural = _('Freedom of Information Requests')
@@ -422,7 +432,7 @@ class FoiRequest(models.Model):
                 }))
 
     def get_accessible_link(self):
-        if self.visibility == 1:
+        if self.visibility == self.VISIBLE_TO_REQUESTER:
             return self.get_auth_link()
         return self.get_absolute_domain_short_url()
 
@@ -444,23 +454,23 @@ class FoiRequest(models.Model):
     def status_is_final(self):
         return self.status == 'resolved'
 
-    def is_visible(self, user, pb_auth=None):
-        if self.visibility == 0:
+    def is_visible(self, user=None, pb_auth=None):
+        if self.visibility == self.INVISIBLE:
             return False
-        if self.visibility == 2:
+        if self.visibility == self.VISIBLE_TO_PUBLIC:
             return True
-        if user and self.visibility == 1 and (
+        if user and self.visibility == self.VISIBLE_TO_REQUESTER and (
                 user.is_authenticated() and
                 self.user == user):
             return True
         if user and (user.is_superuser or user.has_perm('foirequest.see_private')):
             return True
-        if self.visibility == 1 and pb_auth is not None:
+        if self.visibility == self.VISIBLE_TO_REQUESTER and pb_auth is not None:
             return self.check_auth_code(pb_auth)
         return False
 
     def in_search_index(self):
-        return (self.visibility > 1 and
+        return (self.is_visible() and
             self.is_foi and self.same_as is None)
 
     def needs_public_body(self):
@@ -708,6 +718,7 @@ class FoiRequest(models.Model):
             send_address=send_address)
         message.plaintext_redacted = message.redact_plaintext()
         message.send()
+        message.save()
         return message
 
     def add_escalation_message(self, subject, message, send_address=False):
@@ -732,6 +743,7 @@ class FoiRequest(models.Model):
         zip_bytes = package_foirequest(self)
         attachments = [(filename, zip_bytes, 'application/zip')]
         message.send(attachments=attachments)
+        message.save()
         self.escalated.send(sender=self)
 
     @classmethod
@@ -781,15 +793,16 @@ class FoiRequest(models.Model):
         return str(cls.STATUS_RESOLUTION_DICT.get(status, (None, _("Unknown")))[1])
 
     @classmethod
-    def from_request_form(cls, user, public_body_object, foi_law,
+    def from_request_form(cls, user=None, public_body=None, foi_law=None,
             form_data=None, post_data=None, **kwargs):
         now = timezone.now()
         request = FoiRequest(title=form_data['subject'],
-                public_body=public_body_object,
+                public_body=public_body,
                 user=user,
                 description=form_data['body'],
                 public=form_data['public'],
                 site=Site.objects.get_current(),
+                reference=form_data.get('reference', ''),
                 first_message=now,
                 last_message=now)
         send_now = False
@@ -798,9 +811,9 @@ class FoiRequest(models.Model):
             request.visibility = 0
         else:
             request.determine_visibility()
-            if public_body_object is None:
+            if public_body is None:
                 request.status = 'publicbody_needed'
-            elif not public_body_object.confirmed:
+            elif not public_body.confirmed:
                 request.status = 'awaiting_publicbody_confirmation'
             else:
                 request.status = 'awaiting_response'
@@ -812,6 +825,10 @@ class FoiRequest(models.Model):
             request.jurisdiction = foi_law.jurisdiction
         if send_now:
             request.due_date = request.law.calculate_due_date()
+
+        if kwargs.get('blocked'):
+            send_now = False
+            request.is_blocked = True
 
         # ensure slug is unique
         request.slug = slugify(request.title)
@@ -859,19 +876,20 @@ class FoiRequest(models.Model):
                 full_text=form_data.get('full_text', False),
                 send_address=send_address)
         message.plaintext_redacted = message.redact_plaintext()
-        if public_body_object is not None:
-            message.recipient_public_body = public_body_object
-            message.recipient = public_body_object.name
-            message.recipient_email = public_body_object.email
+        if public_body is not None:
+            message.recipient_public_body = public_body
+            message.recipient = public_body.name
+            message.recipient_email = public_body.email
             cls.request_to_public_body.send(sender=request)
         else:
             message.recipient = ""
             message.recipient_email = ""
         message.original = ''
         message.save()
-        cls.request_created.send(sender=request, reference=form_data.get('reference'))
+        cls.request_created.send(sender=request, reference=form_data.get('reference', ''))
         if send_now:
             message.send()
+            message.save()
         return request
 
     def construct_message_body(self, text, foilaw, post_data,
@@ -903,9 +921,9 @@ class FoiRequest(models.Model):
 
     def determine_visibility(self):
         if self.public:
-            self.visibility = 2
+            self.visibility = self.VISIBLE_TO_PUBLIC
         else:
-            self.visibility = 1
+            self.visibility = self.VISIBLE_TO_REQUESTER
 
     def set_status_after_change(self):
         if not self.user.is_active:
@@ -929,6 +947,7 @@ class FoiRequest(models.Model):
         if message.sent:
             return None
         message.send()
+        message.save()
         return self
 
     @classmethod
@@ -998,7 +1017,8 @@ class FoiRequest(models.Model):
             message.plaintext_redacted = message.redact_plaintext()
 
             assert not message.sent
-            message.send()  # saves message
+            message.send()
+            message.save()
 
     def make_public(self):
         self.public = True
@@ -1103,6 +1123,11 @@ class PublicBodySuggestion(models.Model):
         verbose_name_plural = _('Public Body Suggestions')
 
 
+class FoiMessageManager(models.Manager):
+    def get_throttle_filter(self, user):
+        return self.get_queryset().filter(sender_user=user), 'timestamp'
+
+
 @python_2_unicode_compatible
 class FoiMessage(models.Model):
     request = models.ForeignKey(FoiRequest,
@@ -1150,6 +1175,8 @@ class FoiMessage(models.Model):
     original = models.TextField(_("Original"), blank=True)
     redacted = models.BooleanField(_("Was Redacted?"), default=False)
     not_publishable = models.BooleanField(_('Not publishable'), default=False)
+
+    objects = FoiMessageManager()
 
     class Meta:
         get_latest_by = 'timestamp'
@@ -1342,10 +1369,11 @@ class FoiMessage(models.Model):
         # Use send_foi_mail here
         from_addr = make_address(self.request.secret_address,
                 self.request.user.get_full_name())
-        send_foi_mail(self.subject, self.plaintext, from_addr,
-                [self.recipient_email.strip()], attachments=attachments)
-        self.sent = True
-        self.save()
+        if not self.request.is_blocked:
+            send_foi_mail(self.subject, self.plaintext, from_addr,
+                    [self.recipient_email.strip()], attachments=attachments)
+            self.sent = True
+            self.save()
         self.request._messages = None
         if notify:
             FoiRequest.message_sent.send(sender=self.request, message=self)
@@ -1421,7 +1449,7 @@ class FoiAttachment(models.Model):
 
     def has_public_access(self):
         if self.belongs_to:
-            return self.belongs_to.request.visibility == 2 and self.approved
+            return self.belongs_to.request.is_visible() and self.approved
         return False
 
     def can_preview(self):
@@ -1483,7 +1511,7 @@ class FoiEventManager(models.Manager):
     def create_event(self, event_name, request, **context):
         assert event_name in FoiEvent.event_texts
         event = FoiEvent(request=request,
-                public=request.visibility == 2,
+                public=request.is_visible(),
                 event_name=event_name)
         event.user = context.pop("user", None)
         event.public_body = context.pop("public_body", None)

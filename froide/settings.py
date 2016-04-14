@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
 from configurations import Configuration, importer, values
 importer.install(check_options=True)
 
 import os
 import sys
 import re
+
+from celery.schedules import crontab
 
 rec = lambda x: re.compile(x, re.I | re.U)
 
@@ -34,7 +38,6 @@ class Base(Configuration):
 
         # external
         'haystack',
-        'djcelery',
         'taggit',
         'floppyforms',
         'overextends',
@@ -305,13 +308,35 @@ class Base(Configuration):
 
     # ######## Celery #############
 
-    CELERY_RESULT_BACKEND = values.Value('djcelery.backends.database:DatabaseBackend')
-    CELERYBEAT_SCHEDULER = values.Value("djcelery.schedulers.DatabaseScheduler")
+    CELERYBEAT_SCHEDULE = {
+        'fetch-mail': {
+            'task': 'froide.foirequest.tasks.fetch_mail',
+            'schedule': crontab(),
+        },
+        'detect-asleep': {
+            'task': 'froide.foirequest.tasks.detect_asleep',
+            'schedule': crontab(hour=0, minute=0),
+        },
+        'detect-overdue': {
+            'task': 'froide.foirequest.tasks.detect_overdue',
+            'schedule': crontab(hour=0, minute=0),
+        },
+        'update-foirequestfollowers': {
+            'task': 'froide.foirequestfollower.tasks.batch_update',
+            'schedule': crontab(hour=0, minute=0),
+        },
+        'classification-reminder': {
+            'task': 'froide.foirequest.tasks.classification_reminder',
+            'schedule': crontab(hour=7, minute=0, day_of_week=6),
+        },
+    }
+
     CELERY_ALWAYS_EAGER = values.BooleanValue(True)
 
     CELERY_ROUTES = {
         'froide.foirequest.tasks.fetch_mail': {"queue": "emailfetch"},
     }
+    CELERY_TIMEZONE = TIME_ZONE
 
     # ######## Haystack ###########
 
@@ -323,6 +348,8 @@ class Base(Configuration):
 
     # ######### Tastypie #########
 
+    # Do not include xml by default, so lxml doesn't need to be present
+    TASTYPIE_DEFAULT_FORMATS = ['json']
     TASTYPIE_SWAGGER_API_MODULE = values.Value('froide.urls.v1_api')
 
     # ######### Froide settings ########
@@ -344,6 +371,7 @@ class Base(Configuration):
         closings=[rec(u"Sincerely yours,?")],
         public_body_boosts={},
         dryrun=False,
+        request_throttle=None,  # Set to [(15, 7 * 24 * 60 * 60),] for 15 requests in 7 days
         dryrun_domain="testmail.example.com",
         allow_pseudonym=False,
         doc_conversion_binary=None,  # replace with libreoffice instance
@@ -471,8 +499,6 @@ class Test(Base):
             },
         }
 
-    CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend'
-    CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
     CELERY_ALWAYS_EAGER = True
     CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 

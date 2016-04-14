@@ -1,5 +1,3 @@
-from datetime import timedelta, datetime
-
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -9,8 +7,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_POST
 from django.contrib.auth.views import password_reset_confirm as django_password_reset_confirm
 from django.utils.http import urlsafe_base64_decode, is_safe_url
+from django.views.generic import ListView
 
-from froide.foirequestfollower.models import FoiRequestFollower
 from froide.foirequest.models import FoiRequest, FoiEvent
 from froide.helper.auth import login_user
 from froide.helper.utils import render_403
@@ -18,6 +16,7 @@ from froide.helper.utils import render_403
 from .forms import (UserLoginForm, PasswordResetForm, NewUserForm,
         UserEmailConfirmationForm, UserChangeForm, UserDeleteForm, TermsForm)
 from .models import AccountManager
+from .utils import cancel_user
 
 
 def confirm(request, user_id, secret, request_id=None):
@@ -67,35 +66,49 @@ def go(request, user_id, secret, url):
     return redirect(url)
 
 
-def show(request, context=None, status=200):
-    if not request.user.is_authenticated():
-        return redirect('account-login')
-    my_requests = FoiRequest.objects.filter(user=request.user).order_by("-last_message")
-    if not context:
-        context = {}
-    if 'new' in request.GET:
-        request.user.is_new = True
-    own_foirequests = FoiRequest.objects.get_dashboard_requests(request.user)
-    followed_requests = FoiRequestFollower.objects.filter(user=request.user)\
-        .select_related('request')
-    followed_foirequest_ids = list(map(lambda x: x.request_id, followed_requests))
-    following = False
-    events = []
-    if followed_foirequest_ids:
-        following = len(followed_foirequest_ids)
-        since = datetime.utcnow() - timedelta(days=14)
-        events = FoiEvent.objects.filter(public=True,
-                request__in=followed_foirequest_ids,
-                timestamp__gte=since).order_by(
-                    'request', 'timestamp')
-    context.update({
-        'own_requests': own_foirequests,
-        'followed_requests': followed_requests,
-        'followed_events': events,
-        'following': following,
-        'foirequests': my_requests
-    })
-    return render(request, 'account/show.html', context, status=status)
+class BaseRequestListView(ListView):
+    paginate_by = 20
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated():
+            return redirect('account-login')
+        return super(BaseRequestListView, self).get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(BaseRequestListView, self).get_context_data(**kwargs)
+        context['menu'] = self.menu_item
+        return context
+
+
+class ImportantRequestsView(BaseRequestListView):
+    template_name = 'account/show_important.html'
+    menu_item = 'important'
+
+    def get_context_data(self, **kwargs):
+        context = super(ImportantRequestsView, self).get_context_data(**kwargs)
+        if 'new' in self.request.GET:
+            self.request.user.is_new = True
+        return context
+
+    def get_queryset(self):
+        return FoiRequest.objects.get_dashboard_requests(self.request.user)
+
+
+class MyRequestsView(BaseRequestListView):
+    template_name = 'account/show_requests.html'
+    menu_item = 'requests'
+
+    def get_queryset(self):
+        return FoiRequest.objects.filter(user=self.request.user)
+
+
+class FollowingRequestsView(BaseRequestListView):
+    template_name = 'account/show_following.html'
+    menu_item = 'following'
+
+    def get_queryset(self):
+        return FoiRequest.objects.filter(
+                foirequestfollower__user=self.request.user)
 
 
 def profile(request, slug):
@@ -186,6 +199,7 @@ def signup(request):
     next = request.POST.get('next')
     if signup_form.is_valid():
         user, password = AccountManager.create_user(**signup_form.cleaned_data)
+        signup_form.save(user)
         AccountManager(user).send_confirmation_mail(password=password)
         messages.add_message(request, messages.SUCCESS,
                 _('Please check your emails for a mail from us with a confirmation link.'))
@@ -212,7 +226,8 @@ def change_password(request):
         messages.add_message(request, messages.SUCCESS,
                 _('Your password has been changed.'))
         return redirect('account-show')
-    return show(request, context={"password_change_form": form}, status=400)
+    return account_settings(request,
+            context={"password_change_form": form}, status=400)
 
 
 @require_POST
@@ -294,7 +309,8 @@ def change_user(request):
     messages.add_message(request, messages.ERROR,
             _('Please correct the errors below. You profile information was not changed.'))
 
-    return show(request, context={"change_form": form}, status=400)
+    return account_settings(request,
+                            context={"change_form": form}, status=400)
 
 
 def change_email(request):
@@ -332,18 +348,7 @@ def delete_account(request):
             status=400
         )
     # Removing all personal data from account
-    user = request.user
-    user.organization = ''
-    user.organization_url = ''
-    user.private = True
-    user.address = ''
-    user.save()
-    user.first_name = ''
-    user.last_name = ''
-    user.is_active = False
-    user.email = ''
-    user.username = 'u%s' % user.pk
-    user.save()
+    cancel_user(request.user)
     auth.logout(request)
     messages.add_message(request, messages.INFO,
             _('Your account has been deleted and you have been logged out.'))

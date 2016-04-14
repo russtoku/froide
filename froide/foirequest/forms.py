@@ -14,7 +14,8 @@ from froide.publicbody.widgets import PublicBodySelect
 from froide.helper.widgets import PriceInput
 from froide.helper.forms import TagObjectForm
 
-from .models import FoiRequest, FoiAttachment
+from .models import FoiRequest, FoiMessage, FoiAttachment
+from .utils import check_throttle
 
 
 new_publicbody_allowed = settings.FROIDE_CONFIG.get(
@@ -47,9 +48,12 @@ class RequestForm(forms.Form):
                         " uncheck this. You can always decide to make it public later.")
             )
     reference = forms.CharField(widget=forms.HiddenInput, required=False)
+    redirect_url = forms.CharField(widget=forms.HiddenInput, required=False)
 
-    def __init__(self, list_of_laws, default_law, hidden, *args, **kwargs):
-        super(RequestForm, self).__init__(*args, **kwargs)
+    def __init__(self, user=None, list_of_laws=(), default_law=None,
+                 hide_law_widgets=True, **kwargs):
+        super(RequestForm, self).__init__(**kwargs)
+        self.user = user
         self.list_of_laws = list_of_laws
         self.indexed_laws = dict([(l.pk, l) for l in self.list_of_laws])
         self.default_law = default_law
@@ -62,7 +66,7 @@ class RequestForm(forms.Form):
         )
         self.fields["law"] = forms.ChoiceField(label=_("Information Law"),
             required=False,
-            widget=forms.Select if not hidden else forms.HiddenInput,
+            widget=forms.Select if not hide_law_widgets else forms.HiddenInput,
             initial=default_law.pk,
             choices=((l.pk, l.name) for l in list_of_laws))
 
@@ -97,16 +101,16 @@ class RequestForm(forms.Form):
 
     def clean_reference(self):
         ref = self.cleaned_data['reference']
-        if ref == '':
-            return None
+        if not ref:
+            return ''
         try:
-            kind, value = ref.split(':')
+            kind, value = ref.split(':', 1)
         except ValueError:
-            return None
+            return ''
         try:
-            return {kind: value}
+            return '%s:%s' % (kind, value)
         except ValueError:
-            return None
+            return ''
 
     def clean_law_for_public_body(self, public_body):
         law = self.clean_law_without_public_body()
@@ -134,6 +138,11 @@ class RequestForm(forms.Form):
             self.foi_law = self.clean_law_for_public_body(self.public_body_object)
         else:
             self.foi_law = self.clean_law_without_public_body()
+
+        throttle_message = check_throttle(self.user, FoiRequest)
+        if throttle_message:
+            raise forms.ValidationError(throttle_message)
+
         return cleaned
 
 
@@ -189,6 +198,11 @@ class SendMessageForm(forms.Form):
                 help_text=(_('If the public body is asking for your post '
                     'address, check this and we will append it to your message.')),
                 required=False)
+
+    def clean(self):
+        throttle_message = check_throttle(self.foirequest.user, FoiMessage)
+        if throttle_message:
+            raise forms.ValidationError(throttle_message)
 
     def save(self, user):
         if self.cleaned_data["to"] == 0:
@@ -251,6 +265,11 @@ class EscalationMessageForm(forms.Form):
                 _('You need to fill in the blanks in the template!')
             )
         return message
+
+    def clean(self):
+        throttle_message = check_throttle(self.foirequest.user, FoiMessage)
+        if throttle_message:
+            raise forms.ValidationError(throttle_message)
 
     def save(self):
         self.foirequest.add_escalation_message(**self.cleaned_data)
@@ -332,6 +351,11 @@ class FoiRequestStatusForm(forms.Form):
         if status == 'resolved':
             if not self.cleaned_data.get('resolution', ''):
                 raise forms.ValidationError(_('Please give a resolution to this request'))
+
+        # if resolution is successful or partially_successful, set status to resolved
+        if self.cleaned_data.get('resolution', '') in ('successful', 'partially_successful'):
+            self.cleaned_data['status'] = 'resolved'
+
         return self.cleaned_data
 
     def set_status(self):
