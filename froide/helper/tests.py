@@ -13,16 +13,6 @@ from .date_utils import calc_easter, calculate_month_range_de
 rec = lambda x: re.compile(x, re.I | re.U)
 
 
-class TestAPIDocs(TestCase):
-    def test_api_docs_main(self):
-        response = self.client.get('/api/v1/docs/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_api_docs_resource(self):
-        response = self.client.get('/api/v1/docs/resources/')
-        self.assertEqual(response.status_code, 200)
-
-
 class TestTextReplacement(TestCase):
     def test_email_name_replacement(self):
         content = 'This is a very long string with a name <and.email@adress.in> it'
@@ -95,8 +85,9 @@ class TestThemeLoader(TestCase):
         tl = ThemeLoader(engines['django'])
         sources = list(tl.get_template_sources('index.html'))
         self.assertEqual(len(sources), 1)
-        self.assertTrue(sources[0].startswith('/'))
-        self.assertTrue(sources[0].endswith('froide/foirequest/templates/index.html'))
+        origin = sources[0]
+        self.assertTrue(origin.name.startswith('/'))
+        self.assertTrue(origin.name.endswith('froide/foirequest/templates/index.html'))
 
 
 class TestFormGenerator(TestCase):
