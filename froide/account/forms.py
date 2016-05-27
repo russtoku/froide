@@ -31,11 +31,11 @@ class NewUserBaseForm(forms.Form):
     address = forms.CharField(max_length=300,
             required=False,
             label=_('Mailing Address'),
-            help_text=_('Optional. Your address will not be displayed publicly and is only needed in case a public body needs to send you paper.'),
+            help_text=_('Optional. Your address will not be displayed publicly and is only needed in case a public agency needs to send you paper.'),
             widget=forms.Textarea(attrs={
                 'rows': '3',
                 'class': 'form-control',
-                'placeholder': _('Street, Post Code, City'),
+                'placeholder': _('Street, City, Zip Code'),
             }))
     user_email = forms.EmailField(label=_('Email address'),
             max_length=75,
@@ -58,7 +58,7 @@ class NewUserBaseForm(forms.Form):
     if USER_CAN_HIDE_WEB:
         private = forms.BooleanField(required=False,
                 label=_("Hide my name on the web"),
-                help_text=mark_safe(_("If you check this, your name will still appear in requests to public bodies, but we will do our best to not display it publicly. However, we cannot guarantee your anonymity")))
+                help_text=mark_safe(_("If you check this, your name will still appear in requests to public agencies, but we will do our best to not display it publicly. However, we cannot guarantee your anonymity")))
 
     def __init__(self, *args, **kwargs):
         super(NewUserBaseForm, self).__init__(*args, **kwargs)
