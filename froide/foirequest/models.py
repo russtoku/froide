@@ -888,7 +888,7 @@ class FoiRequest(models.Model):
         message.save()
         cls.request_created.send(sender=request, reference=form_data.get('reference', ''))
         if send_now:
-            message.send()
+            message.send(attachments=message.attachments)
             message.save()
         return request
 
