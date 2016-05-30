@@ -888,7 +888,8 @@ class FoiRequest(models.Model):
         message.save()
         cls.request_created.send(sender=request, reference=form_data.get('reference', ''))
         if send_now:
-            message.send(attachments=message.attachments)
+            atts = [(att.name, att.read, "application/msword") for att in message.attachments] if message.attachments else None
+            message.send(attachments=atts)
             message.save()
         return request
 
