@@ -42,7 +42,7 @@ class NewUserBaseForm(forms.Form):
             help_text=_('Not public. The given address will '
                         'need to be confirmed.'),
             widget=forms.EmailInput(attrs={
-                    'placeholder': _('mail@ddress.net'),
+                    'placeholder': _('dakine@ovahea.com'),
                     'class': 'form-control'
             }))
 
@@ -135,7 +135,7 @@ class NewUserWithPasswordForm(NewUserForm):
 class UserLoginForm(forms.Form):
     email = forms.EmailField(widget=forms.EmailInput(
         attrs={
-            'placeholder': _('mail@ddress.net'),
+            'placeholder': _('dakine@ovahea.com'),
             'class': 'form-control'
         }),
         label=_('Email address'))
@@ -149,7 +149,7 @@ class UserLoginForm(forms.Form):
 class PasswordResetForm(auth.forms.PasswordResetForm):
     email = forms.EmailField(widget=forms.EmailInput(
         attrs={
-            'placeholder': _('mail@ddress.net'),
+            'placeholder': _('dakine@ovahea.com'),
             'class': 'form-control'
         }),
         label=_('Email address'))
