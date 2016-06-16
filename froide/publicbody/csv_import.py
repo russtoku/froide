@@ -74,7 +74,7 @@ class CSVImporter(object):
             if 'id' in row and row['id']:
                 pb = PublicBody.objects.get(id=row['id'])
             else:
-                pb = PublicBody.objects.get(slug=row['slug'])
+                pb = PublicBody.objects.get(slug=row['slug'], jurisdiction=row['jurisdiction'])
             # If it exists, update it
             row.pop('id', None)  # Do not update id though
             row['_updated_by'] = self.user
