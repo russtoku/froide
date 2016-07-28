@@ -1380,7 +1380,9 @@ class FoiMessage(models.Model):
                 self.request.user.get_full_name())
         if not self.request.is_blocked:
             send_foi_mail(self.subject, self.plaintext, from_addr,
-                    [self.recipient_email.strip()], attachments=attachments)
+                [self.recipient_email.strip()],
+                bcc=[self.request.user.email],
+                attachments=attachments)
             self.sent = True
             self.save()
         self.request._messages = None

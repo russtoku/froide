@@ -25,7 +25,7 @@ Please investigate! %(url)s
 
 
 def send_foi_mail(subject, message, from_email, recipient_list,
-                  attachments=None, fail_silently=False, **kwargs):
+                  bcc=None, attachments=None, fail_silently=False, **kwargs):
     connection = get_connection(
         backend=getattr(settings, 'FOI_EMAIL_BACKEND', settings.EMAIL_BACKEND),
         username=settings.FOI_EMAIL_HOST_USER,
@@ -46,7 +46,7 @@ def send_foi_mail(subject, message, from_email, recipient_list,
     else:
         headers['Reply-To'] = from_email
     email = EmailMessage(subject, message, from_email, recipient_list,
-                        connection=connection, headers=headers)
+                         bcc=bcc, connection=connection, headers=headers)
     if attachments is not None:
         for name, data, mime_type in attachments:
             email.attach(name, data, mime_type)
