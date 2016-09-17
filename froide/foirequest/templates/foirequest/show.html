@@ -517,7 +517,6 @@ data-spy="scroll" data-target="#message-nav-container"
 
   <div class="col-lg-3 col-md-3">
     <ul class="nav nav-compact hidden-print">
-       <li class="nav-header">{% trans "Followers" %}</li>
       {% with count=object.follow_count %}
         {% block followers %}<li>
           <span class="badge{% if count %} badge-info{% endif %}">{% blocktrans count counter=count %}{{ counter }} follower{% plural %}{{ counter }} followers{% endblocktrans %}</span>
@@ -536,21 +535,15 @@ data-spy="scroll" data-target="#message-nav-container"
       {% block social_sharing %}
         <li class="nav-header">{% trans "Share this request" %}</li>
         <li>
-          <a href="https://twitter.com/share?url={{ object.get_absolute_domain_short_url|urlencode }}">
+          <a href="https://twitter.com/share?url={{ object.get_absolute_domain_short_url|urlencode }}" target="_blank">
             <span class="glyphicon glyphicon-share"></span>
             {% trans "Twitter" %}
           </a>
         </li>
         <li>
-          <a href="https://www.facebook.com/share.php?u={{ object.get_absolute_domain_short_url|urlencode }}">
+          <a href="https://www.facebook.com/share.php?u={{ object.get_absolute_domain_short_url|urlencode }}" target="_blank">
             <span class="glyphicon glyphicon-share"></span>
             {% trans "Facebook" %}
-          </a>
-        </li>
-        <li>
-          <a href="https://plus.google.com/share?url={{ object.get_absolute_domain_short_url|urlencode }}">
-            <span class="glyphicon glyphicon-share"></span>
-            {% trans "Google+" %}
           </a>
         </li>
         {% endblock %}

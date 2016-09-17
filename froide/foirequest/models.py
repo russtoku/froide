@@ -137,7 +137,7 @@ class PublishedNotFoiRequestManager(PublishedFoiRequestManager):
 
 
 class TaggedFoiRequest(TaggedItemBase):
-    content_object = models.ForeignKey('FoiRequest')
+    content_object = models.ForeignKey('FoiRequest', on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = _('FoI Request Tag')
@@ -468,7 +468,7 @@ class FoiRequest(models.Model):
         if self.visibility == self.VISIBLE_TO_PUBLIC:
             return True
         if user and self.visibility == self.VISIBLE_TO_REQUESTER and (
-                user.is_authenticated() and
+                user.is_authenticated and
                 self.user == user):
             return True
         if user and (user.is_superuser or user.has_perm('foirequest.see_private')):
@@ -1114,9 +1114,10 @@ class FoiRequest(models.Model):
 
 class PublicBodySuggestion(models.Model):
     request = models.ForeignKey(FoiRequest,
-            verbose_name=_("Freedom of Information Request"))
+            verbose_name=_("Freedom of Information Request"),
+            on_delete=models.CASCADE)
     public_body = models.ForeignKey(PublicBody,
-            verbose_name=_("Public Body"))
+            verbose_name=_("Public Body"), on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
             on_delete=models.SET_NULL,
             verbose_name=_("User"))
@@ -1140,7 +1141,8 @@ class FoiMessageManager(models.Manager):
 @python_2_unicode_compatible
 class FoiMessage(models.Model):
     request = models.ForeignKey(FoiRequest,
-            verbose_name=_("Freedom of Information Request"))
+            verbose_name=_("Freedom of Information Request"),
+            on_delete=models.CASCADE)
     sent = models.BooleanField(_("has message been sent?"), default=True)
     is_response = models.BooleanField(_("Is this message a response?"),
             default=True)
@@ -1397,7 +1399,7 @@ def upload_to(instance, filename):
 @python_2_unicode_compatible
 class FoiAttachment(models.Model):
     belongs_to = models.ForeignKey(FoiMessage, null=True,
-            verbose_name=_("Belongs to request"))
+            verbose_name=_("Belongs to request"), on_delete=models.CASCADE)
     name = models.CharField(_("Name"), max_length=255)
     file = models.FileField(_("File"), upload_to=upload_to, max_length=255)
     size = models.IntegerField(_("Size"), blank=True, null=True)
@@ -1504,7 +1506,7 @@ class FoiAttachment(models.Model):
         if self.approved:
             return True
         if user and (
-                user.is_authenticated() and
+                user.is_authenticated and
                 foirequest.user == user):
             return True
         if user and (user.is_superuser or user.has_perm('foirequest.see_private')):
@@ -1534,7 +1536,8 @@ class FoiEventManager(models.Manager):
 @python_2_unicode_compatible
 class FoiEvent(models.Model):
     request = models.ForeignKey(FoiRequest,
-            verbose_name=_("Freedom of Information Request"))
+            verbose_name=_("Freedom of Information Request"),
+            on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
             on_delete=models.SET_NULL, blank=True,
             verbose_name=_("User"))
@@ -1654,7 +1657,8 @@ class FoiEvent(models.Model):
 class DeferredMessage(models.Model):
     recipient = models.CharField(max_length=255, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
-    request = models.ForeignKey(FoiRequest, null=True, blank=True)
+    request = models.ForeignKey(FoiRequest, null=True, blank=True,
+        on_delete=models.CASCADE)
     mail = models.TextField(blank=True)
     spam = models.BooleanField(default=False)
 
