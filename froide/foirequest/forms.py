@@ -313,11 +313,15 @@ class FoiRequestStatusForm(forms.Form):
             ]
     )
 
-    resolution = forms.ChoiceField(label=_('Resolution'),
-        choices=[('', _('No outcome yet'))] + FoiRequest.RESOLUTION_FIELD_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        help_text=_('How would you describe the current outcome of this request?'))
+    #resolution = forms.ChoiceField(label=_('Resolution'),
+        #choices=[('', _('No outcome yet'))] + FoiRequest.RESOLUTION_FIELD_CHOICES,
+        #required=False,
+        #widget=forms.Select(attrs={'class': 'form-control'}),
+        #help_text=_('How would you describe the current outcome of this request?'))
+    resolution = forms.CharField(label=_("Resolution"), required=False,
+            widget=forms.Textarea(attrs={"class": "form-control",
+                "placeholder": _("Resolution")}))
+
     redirected = forms.IntegerField(
         label=_("Redirected to"),
         required=False,
