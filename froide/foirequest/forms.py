@@ -295,13 +295,14 @@ class FoiRequestStatusForm(forms.Form):
     def __init__(self, foirequest, *args, **kwargs):
         super(FoiRequestStatusForm, self).__init__(*args, **kwargs)
         self.foirequest = foirequest
-        self.fields['refusal_reason'] = forms.ChoiceField(
+        self.fields['refusal_reason'] = forms.CharField(
             label=_("Refusal Reason"),
-            choices=[('', _('No or other reason given'))] + (
-                foirequest.law.get_refusal_reason_choices()
-            ),
+            #choices=[('', _('No or other reason given'))] + (
+            #    foirequest.law.get_refusal_reason_choices()
+            #),
             required=False,
-            widget=forms.Select(attrs={'class': 'form-control'}),
+            #widget=forms.Select(attrs={'class': 'form-control'}),
+            widget=forms.Textarea(attrs={"class": "form-control"}),
             help_text=_('When you are (partially) denied access to information, the Public Body should always state the reason.')
         )
 
@@ -313,14 +314,11 @@ class FoiRequestStatusForm(forms.Form):
             ]
     )
 
-    #resolution = forms.ChoiceField(label=_('Resolution'),
-        #choices=[('', _('No outcome yet'))] + FoiRequest.RESOLUTION_FIELD_CHOICES,
-        #required=False,
-        #widget=forms.Select(attrs={'class': 'form-control'}),
-        #help_text=_('How would you describe the current outcome of this request?'))
-    resolution = forms.CharField(label=_("Resolution"), required=False,
-            widget=forms.Textarea(attrs={"class": "form-control",
-                "placeholder": _("Resolution")}))
+    resolution = forms.ChoiceField(label=_('Resolution'),
+        choices=[('', _('No outcome yet'))] + FoiRequest.RESOLUTION_FIELD_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        help_text=_('How would you describe the current outcome of this request?'))
 
     redirected = forms.IntegerField(
         label=_("Redirected to"),
