@@ -153,18 +153,18 @@ class FoiRequest(models.Model):
             False
         ),
         ('publicbody_needed',
-            _('Public Body needed'),
-            _('This request still needs a Public Body.'),
+            _('Public Agency needed'),
+            _('This request still needs a Public Agency.'),
             False
         ),
         ('awaiting_publicbody_confirmation',
-            _('Awaiting Public Body confirmation'),
-            _('The Public Body of this request has been created by the user and still needs to be confirmed.'),
+            _('Awaiting Public Agency confirmation'),
+            _('The Public Agency of this request has been created by the user and still needs to be confirmed.'),
             False
         ),
         ('awaiting_response',
             _('Awaiting response'),
-            _('This request is still waiting for a response from the Public Body.'),
+            _('This request is still waiting for a response from the Public Agency.'),
             True
         ),
         ('awaiting_classification',
@@ -196,12 +196,12 @@ class FoiRequest(models.Model):
             True),
         ('not_held',
             _('Information not held'),
-            _('The Public Body stated that it does not possess the information.'),
+            _('The Public Agency stated that it does not possess the information.'),
             True,
         ),
         ('refused',
             _('Request refused'),
-            _('The Public Body refuses to provide the information.'),
+            _('The Public Agency refuses to provide the information.'),
             True
         ),
         ('user_withdrew_costs',
@@ -1123,14 +1123,14 @@ class PublicBodySuggestion(models.Model):
             verbose_name=_("User"))
     timestamp = models.DateTimeField(_("Timestamp of Suggestion"),
             auto_now_add=True)
-    reason = models.TextField(_("Reason this Public Body fits the request"),
+    reason = models.TextField(_("Reason this Public Agency fits the request"),
             blank=True, default="")
 
     class Meta:
         get_latest_by = 'timestamp'
         ordering = ('timestamp',)
-        verbose_name = _('Public Body Suggestion')
-        verbose_name_plural = _('Public Body Suggestions')
+        verbose_name = _('Public Agency Suggestion')
+        verbose_name_plural = _('Public Agency Suggestions')
 
 
 class FoiMessageManager(models.Manager):
