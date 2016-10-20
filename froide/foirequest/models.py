@@ -36,6 +36,10 @@ from froide.helper.text_utils import (replace_email_name,
 
 from .foi_mail import send_foi_mail, package_foirequest
 
+from uipa_org.theme.doc_utilities import (is_requesting_waiver,
+                                          strip_for_request,
+                                          strip_for_email)
+
 
 class FoiRequestManager(CurrentSiteManager):
 
@@ -804,10 +808,12 @@ class FoiRequest(models.Model):
     def from_request_form(cls, user=None, public_body=None, foi_law=None,
             form_data=None, post_data=None, **kwargs):
         now = timezone.now()
+        fee_waiver = is_requesting_waiver(form_data['body'])
+
         request = FoiRequest(title=form_data['subject'],
                 public_body=public_body,
                 user=user,
-                description=form_data['body'],
+                description=strip_for_request(form_data['body']),
                 public=form_data['public'],
                 site=Site.objects.get_current(),
                 reference=form_data.get('reference', ''),
@@ -877,13 +883,21 @@ class FoiRequest(models.Model):
         send_address = True
         if request.law:
             send_address = not request.law.email_only
+
+        # Strip out delimiters from body
+        post_data2 = None
+        if post_data:
+            post_data2 = post_data.copy()
+            post_data2['body'] = strip_for_email(post_data['body'])
+
         message.plaintext = request.construct_message_body(
-                form_data['body'],
+                strip_for_email(form_data['body']),
                 foi_law,
-                post_data=post_data,
+                post_data=post_data2,
                 full_text=form_data.get('full_text', False),
                 send_address=send_address)
         message.plaintext_redacted = message.redact_plaintext()
+
         if public_body is not None:
             message.recipient_public_body = public_body
             message.recipient = public_body.name
@@ -894,9 +908,9 @@ class FoiRequest(models.Model):
             message.recipient_email = ""
         message.original = ''
         message.save()
-        cls.request_created.send(sender=request, reference=form_data.get('reference', ''))
+        cls.request_created.send(sender=request, reference=form_data.get('reference', ''), should_waive_fees=fee_waiver)
         if send_now:
-            atts = [(att.name, att.file.read(), "application/msword") for att in message.attachments] if message.attachments else None
+            atts = [(att.name, att.file.read(), "application/pdf") for att in message.attachments] if message.attachments else None
             message.send(attachments=atts)
             message.save()
         return request
