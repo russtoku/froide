@@ -299,6 +299,11 @@ def search(request):
 
 
 def make_request(request, public_body=None, public_body_id=None):
+    if not request.user.is_authenticated:
+        messages.add_message(request, messages.ERROR,
+                _('You are not currently logged in, please click the signup link in the top right to make a UIPA request.'))
+        return redirect("/")
+
     if public_body_id is not None:
         public_body = get_object_or_404(PublicBody,
                 pk=int(public_body_id))
