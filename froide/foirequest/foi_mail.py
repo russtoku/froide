@@ -234,6 +234,9 @@ def package_foirequest(foirequest):
                 if not attachment.file:
                     continue
                 filename = '%s-%s' % (date_prefix, attachment.name)
-                zfile.write(attachment.file.path, arcname=filename)
+                try:
+                    zfile.write(attachment.file.path, arcname=filename)
+                except:
+                    zfile.write(attachment.file.url, arcname=filename)
         zfile.close()
     return zfile_obj.getvalue()
