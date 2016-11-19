@@ -14,6 +14,8 @@ from froide.helper.email_utils import (EmailParser, get_unread_mails,
                                        make_address)
 from froide.helper.name_generator import get_name_from_number
 
+import urllib2
+
 
 unknown_foimail_message = _('''We received an FoI mail to this address: %(address)s.
 No corresponding request could be identified, please investigate! %(url)s
@@ -237,6 +239,7 @@ def package_foirequest(foirequest):
                 try:
                     zfile.write(attachment.file.path, arcname=filename)
                 except:
-                    zfile.write(attachment.file.url, arcname=filename)
+                    url = urllib2.urlopen(attachment.file.url)
+                    zfile.writestr(filename, url.read())
         zfile.close()
     return zfile_obj.getvalue()
