@@ -193,7 +193,8 @@ class UserChangeForm(forms.Form):
         return email
 
     def save(self):
-        self.user.address = self.cleaned_data['address']
+        if 'address' in self.cleaned_data:
+            self.user.address = self.cleaned_data['address']
         if HAVE_NEWSLETTER():
             self.user.newsletter = self.cleaned_data['newsletter']
 
