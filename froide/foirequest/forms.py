@@ -303,7 +303,7 @@ class FoiRequestStatusForm(forms.Form):
             required=False,
             #widget=forms.Select(attrs={'class': 'form-control'}),
             widget=forms.Textarea(attrs={"class": "form-control"}),
-            help_text=_('When you are (partially) denied access to information, the Public Body should always state the reason.')
+            help_text=_('When you are (partially) denied access to information, the Public Agency should always state the reason.')
         )
 
     status = forms.ChoiceField(label=_("Status"),
@@ -332,7 +332,7 @@ class FoiRequestStatusForm(forms.Form):
             required=False, min_value=0.0,
             localize=True,
             widget=PriceInput,
-            help_text=_('Please specify what the Public Body charges for the information.')
+            help_text=_('Please specify what the Public Agency charges for the information.')
         )
 
         def clean_costs(self):
