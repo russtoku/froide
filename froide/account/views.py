@@ -130,7 +130,8 @@ def logout(request):
     auth.logout(request)
     messages.add_message(request, messages.INFO,
             _('You have been logged out.'))
-    return redirect("/")
+    # return redirect("/")
+    return redirect("account-login")
 
 
 def login(request, base="base.html", context=None,
@@ -190,7 +191,7 @@ def login(request, base="base.html", context=None,
 @require_POST
 def signup(request):
     next = request.POST.get('next')
-    next_url = next if next else '/'
+    next_url = next if next else reverse('account-login')
     if request.user.is_authenticated:
         messages.add_message(request, messages.ERROR,
                 _('You are currently logged in, you cannot signup.'))
@@ -354,7 +355,8 @@ def delete_account(request):
     messages.add_message(request, messages.INFO,
             _('Your account has been deleted and you have been logged out.'))
 
-    return redirect('/')
+    #return redirect('/')
+    return redirect('account-login')
 
 
 def new_terms(request, next=None):
