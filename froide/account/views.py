@@ -235,7 +235,8 @@ def change_password(request):
 @require_POST
 def send_reset_password_link(request):
     next = request.POST.get('next')
-    next_url = next if next else '/'
+    # next_url = next if next else '/'
+    next_url = next if next else reverse('account-login')
     if request.user.is_authenticated:
         messages.add_message(request, messages.ERROR,
                 _('You are currently logged in, you cannot get a password reset link.'))
