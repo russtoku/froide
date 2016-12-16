@@ -37,8 +37,7 @@ from froide.helper.text_utils import (replace_email_name,
 from .foi_mail import send_foi_mail, package_foirequest
 
 from uipa_org.theme.doc_utilities import (is_requesting_waiver,
-                                          strip_for_request,
-                                          strip_for_email)
+                                          prepare_for_description)
 
 
 class FoiRequestManager(CurrentSiteManager):
@@ -813,7 +812,7 @@ class FoiRequest(models.Model):
         request = FoiRequest(title=form_data['subject'],
                 public_body=public_body,
                 user=user,
-                description=strip_for_request(form_data['body']),
+                description=prepare_for_description(form_data['body']),
                 public=form_data['public'],
                 site=Site.objects.get_current(),
                 reference=form_data.get('reference', ''),
@@ -884,16 +883,10 @@ class FoiRequest(models.Model):
         if request.law:
             send_address = not request.law.email_only
 
-        # Strip out delimiters from body
-        post_data2 = None
-        if post_data:
-            post_data2 = post_data.copy()
-            post_data2['body'] = strip_for_email(post_data['body'])
-
         message.plaintext = request.construct_message_body(
-                strip_for_email(form_data['body']),
+                form_data['body'],
                 foi_law,
-                post_data=post_data2,
+                post_data=post_data,
                 full_text=form_data.get('full_text', False),
                 send_address=send_address)
         message.plaintext_redacted = message.redact_plaintext()
