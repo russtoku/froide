@@ -28,15 +28,15 @@ class NewUserBaseForm(forms.Form):
             label=_('Last name'),
             widget=forms.TextInput(attrs={'placeholder': _('Last Name'),
                 'class': 'form-control'}))
-    #address = forms.CharField(max_length=300,
-            #required=False,
-            #label=_('Mailing Address'),
-            #help_text=_('Optional. Your address will not be displayed publicly and is only needed in case a public agency needs to send you paper.'),
-            #widget=forms.Textarea(attrs={
-                #'rows': '3',
-                #'class': 'form-control',
-                #'placeholder': _('Street, City, Zip Code'),
-            #}))
+#    address = forms.CharField(max_length=300,
+#            required=False,
+#            label=_('Mailing Address'),
+#            help_text=_('Optional. Your address will not be displayed publicly and is only needed in case a public agency needs to send you paper.'),
+#            widget=forms.Textarea(attrs={
+#                'rows': '3',
+#                'class': 'form-control',
+#                'placeholder': _('Street, City, Zip Code'),
+#            }))
     user_email = forms.EmailField(label=_('Email address'),
             max_length=75,
             help_text=_('Not public. The given address will '
@@ -163,13 +163,13 @@ class UserChangeForm(forms.Form):
         }),
         label=_('Your email address'))
 
-    #address = forms.CharField(max_length=300,
-            #label=_('Your mailing address'),
-            #help_text=_('Your address will never be displayed publicly.'),
-            #widget=forms.Textarea(attrs={'placeholder': _('Street, Post Code, City'),
-                #'class': 'form-control'}))
+#    address = forms.CharField(max_length=300,
+#            label=_('Your mailing address'),
+#            help_text=_('Your address will never be displayed publicly.'),
+#            widget=forms.Textarea(attrs={'placeholder': _('Street, Post Code, City'),
+#                'class': 'form-control'}))
 
-    #field_order = ['email', 'newsletter', 'address']
+#    field_order = ['email', 'newsletter', 'address']
     field_order = ['email', 'newsletter']
 
     def __init__(self, user, *args, **kwargs):
