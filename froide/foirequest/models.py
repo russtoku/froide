@@ -903,9 +903,10 @@ class FoiRequest(models.Model):
         message.save()
         cls.request_created.send(sender=request, reference=form_data.get('reference', ''), should_waive_fees=fee_waiver)
         if send_now:
-            atts = [(att.name, att.file.read(), "application/pdf") for att in message.attachments] if message.attachments else None
-            message.send(attachments=atts)
-            message.save()
+            updated_message = FoiMessage.objects.get(pk=message.pk)
+            atts = [(att.name, att.file.read(), "application/pdf") for att in updated_message.attachments] if updated_message.attachments else None
+            updated_message.send(attachments=atts)
+            updated_message.save()
         return request
 
     def construct_message_body(self, text, foilaw, post_data,
