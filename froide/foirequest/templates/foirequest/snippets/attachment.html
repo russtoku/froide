@@ -8,16 +8,12 @@
           <p>
             {% if attachment.name != 'form1_records_request.pdf' %}
             {% trans "Please check this attachment for personally identifying information. Then publish the document (unless you are explicitly forbidden from publishing) or redact the information." %}
-            {% else %}
-            Please fill me in here.
             {% endif %}
           </p>
         {% else %}
           <p>
             {% if attachment.name != 'form1_records_request.pdf' %}
             {% blocktrans with name=object.user.get_full_name %}Please check this attachment for personally identifying information (besides your name {{ name }}). Then publish the document (unless you are explicitly forbidden from publishing) or redact the information.{% endblocktrans %}
-            {% else %}
-            {{ attachment.request }}
             {% endif %}
           </p>
         {% endif %}
