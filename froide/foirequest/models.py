@@ -621,7 +621,7 @@ class FoiRequest(models.Model):
     def get_send_message_form(self):
         from .forms import SendMessageForm
         last_message = list(self.messages)[-1]
-        subject = _("Re: %(subject)s"
+        subject = _("%(subject)s"
                 ) % {"subject": last_message.subject}
         if self.is_overdue() and self.awaits_response():
             days = (timezone.now() - self.due_date).days + 1
