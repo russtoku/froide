@@ -54,8 +54,7 @@ class FoiRequestManager(CurrentSiteManager):
         return self.get_overdue().filter(due_date__gt=yesterday)
 
     def get_asleep(self):
-        #six_months_ago = timezone.now() - timedelta(days=30 * 6)
-        six_months_ago = timezone.now() - timedelta(days=3)
+        six_months_ago = timezone.now() - timedelta(days=30 * 6)
         return self.get_queryset()\
             .filter(
                 last_message__lt=six_months_ago
