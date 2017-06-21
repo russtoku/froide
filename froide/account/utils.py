@@ -59,8 +59,11 @@ def cancel_user(user):
     user.newsletter = False
     user.address = ''
     user.save()
-    user.first_name = ''
-    user.last_name = ''
+    # Keep first/last name because if a file needs to be redacted after account
+    # is deleted.
+    #
+    # user.first_name = ''
+    # user.last_name = ''
     user.is_active = False
     user.is_deleted = True
     user.date_left = timezone.now()
