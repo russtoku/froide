@@ -448,7 +448,7 @@ class PostalScanMixin(object):
 
 
 class PostalReplyForm(forms.Form, PostalScanMixin):
-    scan_help_text = mark_safe(_("Uploaded scans can be PDF, JPG or PNG. Please make sure to <strong>redact/black out all private information concerning you</strong>."))
+    scan_help_text = mark_safe(_("Uploaded scans can be PDF, JPG or PNG and no greater than {0} MB. Please make sure to <strong>redact/black out all private information concerning you</strong>.".format(settings.DATA_UPLOAD_MAX_MEMORY_SIZE/(1024 * 1024))))
     date = forms.DateField(
             widget=forms.TextInput(attrs={
                 "class": "form-control",
