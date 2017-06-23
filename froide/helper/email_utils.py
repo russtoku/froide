@@ -161,15 +161,18 @@ class EmailParser(object):
                 attachments.append(attachment)
             elif part.get_content_type() == "text/plain":
                 charset = part.get_content_charset() or 'ascii'
-                body.append(str(
-                    part.get_payload(decode=True),
-                    charset, 'replace'))
+                try:
+                    message = part.get_payload(decode=True).decode(charset)
+                except ValueError:
+                    message = part.get_payload(decode=True).decode('ascii', 'ignore')
+                body.append(message)
             elif part.get_content_type() == "text/html":
                 charset = part.get_content_charset() or 'ascii'
-                html.append(str(
-                    part.get_payload(decode=True),
-                    charset,
-                    'replace'))
+                try:
+                    message = part.get_payload(decode=True).decode(charset)
+                except ValueError:
+                    message = part.get_payload(decode=True).decode('ascii', 'ignore')
+                html.append(message)
 
     def get(self, field):
         if isinstance(field, bytes):
