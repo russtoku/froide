@@ -16,6 +16,9 @@ from froide.helper.name_generator import get_name_from_number
 
 import urllib2
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 unknown_foimail_message = _('''We received an FoI mail to this address: %(address)s.
 No corresponding request could be identified, please investigate! %(url)s
@@ -125,6 +128,8 @@ def get_foirequest_from_mail(email):
 def _deliver_mail(email, mail_string=None, manual=False):
     from .models import DeferredMessage
 
+    logger.info("Attempting to deliver message")
+
     received_list = email['to'] + email['cc'] \
             + email['resent_to'] + email['resent_cc']
     # TODO: BCC?
@@ -150,20 +155,30 @@ def _deliver_mail(email, mail_string=None, manual=False):
             mail_string = base64.b64encode(mail_string).decode("utf-8")
 
     already = set()
+
     for received in received_list:
+
+        logger.info("Attempting to parse {0}".format(received))
+
         secret_mail = received[1]
+
+        logger.info("Secret mail {0}".format(secret_mail))
+
         if secret_mail in already:
             continue
         already.add(secret_mail)
 
         foi_request = get_foirequest_from_mail(secret_mail)
         if not foi_request:
+            logger.info("Couldn't retrieve foi_request from secret mail")
             deferred = DeferredMessage.objects.filter(recipient=secret_mail, request__isnull=False)
             if len(deferred) == 0 or len(deferred) > 1:
+                logger.info("Can't automatically match so create deferred")
                 # Can't do automatic matching!
                 create_deferred(secret_mail, mail_string, b64_encoded=b64_encoded, spam=False)
                 continue
             else:
+                logger.info("Set foi_request to deferred request")
                 deferred = deferred[0]
                 foi_request = deferred.request
 
@@ -185,6 +200,7 @@ def _deliver_mail(email, mail_string=None, manual=False):
                         spam=True, subject=_('Possible Spam Mail received'), body=spam_message)
                     continue
 
+        logger.info("Attempting to add message from email to foi_request {0}".format(foi_request.pk))
         foi_request.add_message_from_email(email, mail_string)
 
 
