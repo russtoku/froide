@@ -875,7 +875,7 @@ class FoiRequest(models.Model):
             sender_name=user.display_name(),
             timestamp=now,
             status="awaiting_response",
-            subject=u'Records Request for %s: %s' % (public_body.name, request.title)
+            subject=u'Records Request for %s: %s [#%s]' % (public_body.name, request.title, request.pk)
         )
         message.subject_redacted = message.redact_subject()
         send_address = True
