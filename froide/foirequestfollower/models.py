@@ -117,7 +117,7 @@ class FoiRequestFollower(models.Model):
 
         count = len(req_event_dict)
         subject = ungettext_lazy(
-            "%(site_name)s: Update on one followed request",
+            "%(site_name)s: Update on followed request",
             "%(site_name)s: Update on %(count)s followed requests",
             count) % {
                 'site_name': settings.SITE_NAME,
