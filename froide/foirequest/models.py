@@ -40,6 +40,9 @@ from uipa_org.theme.doc_utilities import (is_requesting_waiver,
                                           prepare_for_description)
 
 
+import logging
+logger = logging.getLogger(__name__)
+
 class FoiRequestManager(CurrentSiteManager):
 
     def get_by_secret_mail(self, mail):
@@ -1693,6 +1696,7 @@ class DeferredMessage(models.Model):
         self.request = request
         self.save()
         mail = base64.b64decode(self.mail)
+        logging.info("Attempting to redeliver mail {0}".format(mail))
         mail = mail.replace(self.recipient.encode('utf-8'),
                             self.request.secret_address.encode('utf-8'))
         process_mail.delay(mail, manual=True)

@@ -128,7 +128,7 @@ def get_foirequest_from_mail(email):
 def _deliver_mail(email, mail_string=None, manual=False):
     from .models import DeferredMessage
 
-    logger.info("Attempting to deliver message")
+    logger.info("Attempting to deliver message {0}".format(email))
 
     received_list = email['to'] + email['cc'] \
             + email['resent_to'] + email['resent_cc']
