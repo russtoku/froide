@@ -1,5 +1,7 @@
 import os
 
+from celery.utils.log import get_task_logger
+
 from django.conf import settings
 from django.utils import translation
 from django.db import transaction
@@ -12,12 +14,18 @@ from .foi_mail import _process_mail, _fetch_mail
 from .file_utils import convert_to_pdf
 
 
+logger = get_task_logger(__name__)
+
+
 @celery_app.task(acks_late=True, time_limit=60)
 def process_mail(*args, **kwargs):
     translation.activate(settings.LANGUAGE_CODE)
 
-    with transaction.atomic():
-        _process_mail(*args, **kwargs)
+    try:
+        with transaction.atomic():
+            _process_mail(*args, **kwargs)
+    except Exception as e:
+        logger.error(e)
 
 
 @celery_app.task(expires=60)
