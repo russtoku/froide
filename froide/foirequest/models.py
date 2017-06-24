@@ -1699,7 +1699,7 @@ class DeferredMessage(models.Model):
         logging.info("Attempting to redeliver mail {0}".format(mail))
         mail = mail.replace(self.recipient.encode('utf-8'),
                             self.request.secret_address.encode('utf-8'))
-        process_mail.delay(mail, manual=True)
+        process_mail.delay(mail, mail_type="postmark", manual=True)
 
 
 # Import Signals here so models are available
