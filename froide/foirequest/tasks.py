@@ -19,6 +19,8 @@ logger = get_task_logger(__name__)
 
 @celery_app.task(acks_late=True, time_limit=60)
 def process_mail(*args, **kwargs):
+    logger.info("Trying to process mail.")
+
     translation.activate(settings.LANGUAGE_CODE)
 
     try:
