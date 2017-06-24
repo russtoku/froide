@@ -134,16 +134,24 @@ def _deliver_mail(email, mail_string=None, manual=False):
             + email['resent_to'] + email['resent_cc']
     # TODO: BCC?
 
+    logger.info("Received list is {0}".format(received_list))
+
     domains = settings.FOI_EMAIL_DOMAIN
     if isinstance(domains, string_types):
         domains = [domains]
 
+    logger.info("Domain filter is {0}".format(domains))
+
     mail_filter = lambda x: x[1].endswith(tuple(["@%s" % d for d in domains]))
     received_list = [r for r in received_list if mail_filter(r)]
+
+    logger.info("Filter received list is {0}".format(received_list))
 
     # normalize to first FOI_EMAIL_DOMAIN
     received_list = [(x[0], '@'.join(
         (x[1].split('@')[0], domains[0]))) for x in received_list]
+
+    logger.info("Normalized filter received list is {0}".format(received_list))
 
     if mail_string is not None:
         # make original mail storeable as unicode
