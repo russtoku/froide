@@ -23,6 +23,9 @@ from .models import (FoiRequest, FoiMessage,
 from .tasks import count_same_foirequests, convert_attachment_task
 
 
+import logging
+logger = logging.getLogger(__name__)
+
 SUBJECT_REQUEST_ID = re.compile(r' \[#(\d+)\]')
 
 
@@ -243,7 +246,11 @@ class DeferredMessageAdmin(admin.ModelAdmin):
     def auto_redeliver(self, request, queryset):
         parser = EmailParser()
         for deferred in queryset:
+            logger.info("Encoded email: {0}".format(deferred.encoded_mail()))
             email = parser.parse(BytesIO(deferred.encoded_mail()))
+            logger.info("Attempting to parse deferred email {0}".format(email))
+            if 'subject' in email:
+                logger.info("Email subject is {0}".format(email['subject']))
             match = SUBJECT_REQUEST_ID.search(email['subject'])
             if match is not None:
                 try:
