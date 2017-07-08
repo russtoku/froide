@@ -6,24 +6,18 @@
         {% csrf_token %}
         {% if object.user.private %}
           <p>
-            {% if attachment.name != 'form1_records_request.pdf' %}
             {% trans "Please check this attachment for personally identifying information. Then publish the document (unless you are explicitly forbidden from publishing) or redact the information." %}
-            {% endif %}
           </p>
         {% else %}
           <p>
-            {% if attachment.name != 'form1_records_request.pdf' %}
             {% blocktrans with name=object.user.get_full_name %}Please check this attachment for personally identifying information (besides your name {{ name }}). Then publish the document (unless you are explicitly forbidden from publishing) or redact the information.{% endblocktrans %}
-            {% endif %}
           </p>
         {% endif %}
         <div class="media">
           {% include "foirequest/snippets/attachment_item.html" %}
         </div>
-        {% if attachment.name != 'form1_records_request.pdf' %}
         <button class="btn btn-success" type="submit">{% trans "Publish this attachment" %}</button>
         <a class="btn btn-inverse" href="{% url "foirequest-redact_attachment" slug=object.slug attachment_id=attachment.id %}">{% trans "Redact this attachment" %}
-        {% endif %}
         </a>
       </form>
       <div class="media" style="display:none" id="approve-attachment-{{ attachment.pk }}-form-success">
