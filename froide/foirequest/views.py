@@ -47,7 +47,7 @@ X_ACCEL_REDIRECT_PREFIX = getattr(settings, 'X_ACCEL_REDIRECT_PREFIX', '')
 User = get_user_model()
 
 
-@cache_anonymous_page(3 * 60)
+@cache_anonymous_page(10 * 60)
 def index(request):
     successful_foi_requests = FoiRequest.published.successful()[:8]
     unsuccessful_foi_requests = FoiRequest.published.unsuccessful()[:8]
