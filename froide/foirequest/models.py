@@ -672,6 +672,10 @@ class FoiRequest(models.Model):
         message.recipient = self.user.display_name()
         message.plaintext = email['body']
         message.html = email['html']
+
+        if 'cc' in email:
+            message.ccs = ', '.join(["{0} <{1}>".format(cc_tuple[0], cc_tuple[1]) for cc_tuple in email['cc']])
+
         if not message.plaintext and message.html:
             message.plaintext = strip_tags(email['html'])
         message.subject_redacted = message.redact_subject()[:250]
@@ -1186,6 +1190,8 @@ class FoiMessage(models.Model):
             verbose_name=_("Public Body Recipient"), related_name='received_messages')
     status = models.CharField(_("Status"), max_length=50, null=True, blank=True,
             choices=FoiRequest.STATUS_FIELD_CHOICES, default=None)
+    ccs = models.CharField(_("CCs"), max_length=255,
+            blank=True, null=True)
 
     timestamp = models.DateTimeField(_("Timestamp"), blank=True)
     subject = models.CharField(_("Subject"), blank=True, max_length=255)
