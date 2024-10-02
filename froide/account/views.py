@@ -5,6 +5,7 @@ from django.contrib import auth
 from django.contrib import messages
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_POST
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.views import password_reset_confirm as django_password_reset_confirm
 from django.utils.http import urlsafe_base64_decode, is_safe_url
 from django.views.generic import ListView
@@ -222,7 +223,7 @@ def change_password(request):
         messages.add_message(request, messages.ERROR,
                 _('You are not currently logged in, you cannot change your password.'))
         return render_403(request)
-    form = request.user.get_password_change_form(request.POST)
+    form = SetPasswordForm(request.user, request.POST)
     if form.is_valid():
         form.save()
         messages.add_message(request, messages.SUCCESS,
