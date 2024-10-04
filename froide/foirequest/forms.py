@@ -8,7 +8,7 @@ from django.utils.encoding import force_text
 from django.utils.html import escape
 from django.utils import timezone
 
-import floppyforms as forms
+import floppyforms.__future__ as forms
 
 from froide.publicbody.models import PublicBody
 from froide.publicbody.widgets import PublicBodySelect
