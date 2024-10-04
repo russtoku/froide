@@ -40,7 +40,11 @@ def markdown(value, arg=''):
         else:
             safe_mode = False
         if safe_mode:
-            return mark_safe(markdown.markdown(force_text(value), extensions, safe_mode=safe_mode,
-                enable_attributes=False))
+            return mark_safe(markdown.markdown(force_text(value),
+                                               extensions=extensions,
+                                               safe_mode=safe_mode,
+                                               enable_attributes=False))
         else:
-            return mark_safe(markdown.markdown(force_text(value), extensions, safe_mode=safe_mode))
+            return mark_safe(markdown.markdown(force_text(value),
+                                               extensions=extensions,
+                                               safe_mode=safe_mode))
