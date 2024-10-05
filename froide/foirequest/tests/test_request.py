@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import with_statement
+
 
 import re
 from datetime import datetime, timedelta
@@ -42,7 +42,7 @@ class RequestTest(TestCase):
         old_number = pb.number_of_requests
         post = {
             "subject": "Test-Subject",
-            "body": u"This is another test body with Ümläut€n",
+            "body": "This is another test body with Ümläut€n",
             "law": str(pb.default_law.pk)
         }
         response = self.client.post(reverse('foirequest-submit_request',
@@ -141,8 +141,8 @@ class RequestTest(TestCase):
         req.add_message_from_email({
             'msgobj': None,
             'date': timezone.now() - timedelta(days=1),
-            'subject': u"Re: %s" % req.title,
-            'body': u"""Message""",
+            'subject': "Re: %s" % req.title,
+            'body': """Message""",
             'html': None,
             'from': ("FoI Officer", new_foi_email),
             'to': [(req.user.get_full_name(), req.secret_address)],
@@ -197,7 +197,7 @@ class RequestTest(TestCase):
         self.assertEqual(response.status_code, 302)
         new_len = len(mail.outbox)
         self.assertEqual(old_len + 2, new_len)
-        message = list(filter(lambda x: x.subject.startswith(post['subject']), mail.outbox))[-1]
+        message = list([x for x in mail.outbox if x.subject.startswith(post['subject'])])[-1]
         self.assertTrue(message.subject.endswith('[#%s]' % req.pk))
         self.assertTrue(message.body.startswith(post['message']))
         self.assertIn('Legal Note: This mail was sent through a Freedom Of Information Portal.', message.body)
@@ -256,9 +256,9 @@ class RequestTest(TestCase):
                     "user_email": "test@example.com"})
         self.assertEqual(response.status_code, 400)
         self.assertFormError(response, 'user_form', 'first_name',
-                [u'This field is required.'])
+                ['This field is required.'])
         self.assertFormError(response, 'user_form', 'last_name',
-                [u'This field is required.'])
+                ['This field is required.'])
 
     def test_logged_in_request_new_public_body_missing(self):
         self.client.login(username="dummy", password="froide")
@@ -267,11 +267,11 @@ class RequestTest(TestCase):
                 "public_body": "new"})
         self.assertEqual(response.status_code, 400)
         self.assertFormError(response, 'public_body_form', 'name',
-                [u'This field is required.'])
+                ['This field is required.'])
         self.assertFormError(response, 'public_body_form', 'email',
-                [u'This field is required.'])
+                ['This field is required.'])
         self.assertFormError(response, 'public_body_form', 'url',
-                [u'This field is required.'])
+                ['This field is required.'])
 
     def test_logged_in_request_new_public_body(self):
         self.client.login(username="dummy", password="froide")
@@ -319,17 +319,13 @@ class RequestTest(TestCase):
         req = FoiRequest.objects.get(id=req.id)
         self.assertTrue(pb.confirmed)
         self.assertTrue(req.messages[0].sent)
-        message_count = len(list(filter(
-                lambda x: req.secret_address in x.extra_headers.get('Reply-To', ''),
-                mail.outbox)))
+        message_count = len(list([x for x in mail.outbox if req.secret_address in x.extra_headers.get('Reply-To', '')]))
         self.assertEqual(message_count, 1)
         # resent
         response = self.client.post(reverse('publicbody-confirm'),
                 {"public_body": pb.pk})
         self.assertEqual(response.status_code, 302)
-        message_count = len(list(filter(
-                lambda x: req.secret_address in x.extra_headers.get('Reply-To', ''),
-                mail.outbox)))
+        message_count = len(list([x for x in mail.outbox if req.secret_address in x.extra_headers.get('Reply-To', '')]))
         self.assertEqual(message_count, 1)
 
     def test_logged_in_request_with_public_body(self):
@@ -364,9 +360,7 @@ class RequestTest(TestCase):
         self.assertTrue(req.messages[0].sent)
         self.assertEqual(req.law, pb.default_law)
 
-        messages = list(filter(
-                lambda x: req.secret_address in x.extra_headers.get('Reply-To', ''),
-                mail.outbox))
+        messages = list([x for x in mail.outbox if req.secret_address in x.extra_headers.get('Reply-To', '')])
         self.assertEqual(len(messages), 1)
         message = messages[0]
         if settings.FROIDE_CONFIG['dryrun']:
@@ -693,8 +687,8 @@ class RequestTest(TestCase):
         req.add_message_from_email({
             'msgobj': None,
             'date': timezone.now() + timedelta(days=1),
-            'subject': u"Re: %s" % req.title,
-            'body': u"""Message""",
+            'subject': "Re: %s" % req.title,
+            'body': """Message""",
             'html': None,
             'from': ("FoI Officer", "randomfoi@example.com"),
             'to': [(req.user.get_full_name(), req.secret_address)],
@@ -859,7 +853,7 @@ class RequestTest(TestCase):
         self.assertIn(req.get_absolute_url(), response['Location'])
         self.assertEqual(req.law.mediator, req.messages[-1].recipient_public_body)
         self.assertEqual(len(mail.outbox), 2)
-        message = list(filter(lambda x: x.to[0] == req.law.mediator.email, mail.outbox))[-1]
+        message = list([x for x in mail.outbox if x.to[0] == req.law.mediator.email])[-1]
         self.assertEqual(message.attachments[0][0], 'request_%s.zip' % req.pk)
         self.assertEqual(message.attachments[0][2], 'application/zip')
         self.assertEqual(zipfile.ZipFile(BytesIO(message.attachments[0][1]), 'r').namelist(),
@@ -1222,7 +1216,7 @@ class RequestTest(TestCase):
         pb = PublicBody.objects.all()[0]
         law = pb.default_law
         post = {"subject": "A Public Body Request",
-                "body": u"This is another test body with Ümläut€n",
+                "body": "This is another test body with Ümläut€n",
                 "full_text": "true",
                 "law": str(law.id),
                 "public_body": str(pb.id),
@@ -1242,13 +1236,13 @@ class RequestTest(TestCase):
     def test_redaction_config(self):
         self.client.login(username="dummy", password="froide")
         req = FoiRequest.objects.all()[0]
-        name = u"Petra Radetzky"
+        name = "Petra Radetzky"
         req.add_message_from_email({
             'msgobj': None,
             'date': timezone.now(),
             'subject': 'Reply',
-            'body': (u"Sehr geehrte Damen und Herren,\nblub\nbla\n\n"
-                     u"Mit freundlichen Grüßen\n" +
+            'body': ("Sehr geehrte Damen und Herren,\nblub\nbla\n\n"
+                     "Mit freundlichen Grüßen\n" +
                      name),
             'html': 'html',
             'from': ('Petra Radetzky', 'petra.radetsky@bund.example.org'),
@@ -1262,8 +1256,8 @@ class RequestTest(TestCase):
         last = req.messages[-1]
         self.assertNotIn(name, last.plaintext_redacted)
         req.add_message(req.user, 'Test', 'test@example.com',
-            u'Testing',
-            u'Sehr geehrte Frau Radetzky,\n\nblub\n\nMit freundlichen Grüßen\nStefan Wehrmeyer'
+            'Testing',
+            'Sehr geehrte Frau Radetzky,\n\nblub\n\nMit freundlichen Grüßen\nStefan Wehrmeyer'
         )
         req = FoiRequest.objects.all()[0]
         last = req.messages[-1]
@@ -1408,7 +1402,7 @@ class RequestTest(TestCase):
         pb = PublicBody.objects.all()[0]
         post = {
             "subject": "Test" * 64,
-            "body": u"This is another test body with Ümläut€n",
+            "body": "This is another test body with Ümläut€n",
             "law": str(pb.default_law.pk)
         }
         response = self.client.post(reverse('foirequest-submit_request',
@@ -1417,7 +1411,7 @@ class RequestTest(TestCase):
 
         post = {
             "subject": "Test" * 55 + ' a@b.de',
-            "body": u"This is another test body with Ümläut€n",
+            "body": "This is another test body with Ümläut€n",
             "law": str(pb.default_law.pk)
         }
         response = self.client.post(reverse('foirequest-submit_request',
@@ -1466,7 +1460,7 @@ class RequestTest(TestCase):
                     reverse('foirequest-submit_request'), post)
 
             self.assertContains(response,
-                u"exceeded your request limit of 2 requests in 1\xa0minute.",
+                "exceeded your request limit of 2 requests in 1\xa0minute.",
                 status_code=400)
 
     def test_throttling_same_as(self):
@@ -1496,7 +1490,7 @@ class RequestTest(TestCase):
                     self.assertEqual(response.status_code, 302)
 
             self.assertContains(response,
-                u"exceeded your request limit of 2 requests in 1\xa0minute.",
+                "exceeded your request limit of 2 requests in 1\xa0minute.",
                 status_code=400)
 
 

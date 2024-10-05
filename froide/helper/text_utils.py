@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 
-try:
-    from html.entities import name2codepoint
-except ImportError:
-    from htmlentitydefs import name2codepoint
+from html.entities import name2codepoint
 
 from django.utils.six import text_type as str, unichr as chr
 
@@ -59,13 +56,13 @@ def replace_word(needle, replacement, content):
 EMAIL_NAME_RE = re.compile(r'<[^\s]+@[^\s]+>')
 
 
-def replace_email_name(text, replacement=u""):
+def replace_email_name(text, replacement=""):
     return EMAIL_NAME_RE.sub(str(replacement), text)
 
 EMAIL_RE = re.compile(r'[^\s]+@[^\s]+')
 
 
-def replace_email(text, replacement=u""):
+def replace_email(text, replacement=""):
     return EMAIL_RE.sub(str(replacement), text)
 
 

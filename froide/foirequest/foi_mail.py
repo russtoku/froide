@@ -198,7 +198,7 @@ def _deliver_mail(email, mail_string=None, manual=False):
             reply_domains.add(foi_request.public_body.email.split('@')[1])
             strip_subdomains = lambda x: '.'.join(x.split('.')[-2:])
             # Strip subdomains
-            reply_domains = set([strip_subdomains(x) for x in reply_domains])
+            reply_domains = {strip_subdomains(x) for x in reply_domains}
 
             sender_email = email['from'][1]
             if len(messages) > 0 and sender_email and '@' in sender_email:

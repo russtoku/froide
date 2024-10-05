@@ -3,7 +3,7 @@ import hmac
 try:
     from urllib.parse import urlencode
 except ImportError:
-    from urllib import urlencode
+    from urllib.parse import urlencode
 
 from django.utils.six import text_type as str
 from django.db import models, transaction, IntegrityError
@@ -70,10 +70,10 @@ class User(AbstractUser):
 
     def display_name(self):
         if self.private:
-            return str(_(u"<< Name Not Public >>"))
+            return str(_("<< Name Not Public >>"))
         else:
             if self.organization:
-                return u'%s (%s)' % (self.get_full_name(), self.organization)
+                return '%s (%s)' % (self.get_full_name(), self.organization)
             else:
                 return self.get_full_name()
 
@@ -129,17 +129,17 @@ class AccountManager(object):
 
     @classmethod
     def get_username_base(self, firstname, lastname):
-        base = u""
+        base = ""
         first = slugify(firstname)
         last = slugify(lastname)
         if first and last:
-            base = u"%s.%s" % (first[0], last)
+            base = "%s.%s" % (first[0], last)
         elif last:
             base = last
         elif first:
             base = first
         else:
-            base = u"user"
+            base = "user"
         base = base[:27]
         return base
 

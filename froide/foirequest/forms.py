@@ -190,7 +190,7 @@ class SendMessageForm(forms.Form):
                 "publicbody": foirequest.public_body.name
         })]
         choices.extend([(m.id, m.reply_address_entry) for k, m in
-                foirequest.possible_reply_addresses().items()])
+                list(foirequest.possible_reply_addresses().items())])
         self.fields['to'].choices = choices
 
         if foirequest.law and foirequest.law.email_only:
@@ -211,8 +211,7 @@ class SendMessageForm(forms.Form):
             recipient_email = self.foirequest.public_body.email
             recipient_pb = self.foirequest.public_body
         else:
-            message = list(filter(lambda x: x.id == self.cleaned_data["to"],
-                    list(self.foirequest.messages)))[0]
+            message = list([x for x in list(self.foirequest.messages) if x.id == self.cleaned_data["to"]])[0]
             recipient_name = message.sender_name
             recipient_email = message.sender_email
             recipient_pb = message.sender_public_body
@@ -385,7 +384,7 @@ class FoiRequestStatusForm(forms.Form):
         if resolution == "refused" or resolution == "partially_successful":
             foirequest.refusal_reason = data['refusal_reason']
         else:
-            foirequest.refusal_reason = u""
+            foirequest.refusal_reason = ""
 
         foirequest.save()
 
@@ -405,7 +404,7 @@ class ConcreteLawForm(forms.Form):
         self.possible_laws = foirequest.law.combined.all()
         self.fields['law'] = forms.TypedChoiceField(label=_("Information Law"),
             choices=([('', '-------')] +
-                    list(map(lambda x: (x.pk, x.name), self.possible_laws))),
+                    list([(x.pk, x.name) for x in self.possible_laws])),
             coerce=int,
             empty_value=''
         )

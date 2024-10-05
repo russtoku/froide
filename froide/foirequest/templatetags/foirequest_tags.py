@@ -31,7 +31,7 @@ def highlight_request(message):
             escape(content[offset:]))
     )
 
-ONLY_SPACE_LINE = re.compile(u'^[ \u00A0]+$', re.U | re.M)
+ONLY_SPACE_LINE = re.compile('^[ \u00A0]+$', re.U | re.M)
 
 
 def remove_space_lines(content):
@@ -39,12 +39,12 @@ def remove_space_lines(content):
 
 
 def mark_differences(content_a, content_b,
-        start_tag=u'<span{attrs}> ',
+        start_tag='<span{attrs}> ',
         end_tag=' </span>',
         attrs=None,
         min_part_len=3):
     if attrs is None:
-        attrs = u' class="redacted"'
+        attrs = ' class="redacted"'
     start_tag = start_tag.format(attrs=attrs)
     opened = False
     redact = False
@@ -87,12 +87,12 @@ def redact_message(message, user):
 
     if message.request.user == user or user.is_staff:
         content_1 = mark_differences(c_1, r_1,
-            attrs=u' class="redacted redacted-hover"'
+            attrs=' class="redacted redacted-hover"'
             ' data-toggle="tooltip" title="{title}"'.format(
                 title=_('Only visible to you')
             ))
         content_2 = mark_differences(c_2, r_2,
-            attrs=u' class="redacted redacted-hover"'
+            attrs=' class="redacted redacted-hover"'
             ' data-toggle="tooltip" title="{title}"'.format(
                 title=_('Only visible to you')
             ))
@@ -104,11 +104,11 @@ def redact_message(message, user):
     content_2 = urlizetrunc(content_2, 40, autoescape=False)
 
     if content_2:
-        return mark_safe(u''.join([
+        return mark_safe(''.join([
             content_1,
-            u'<a href="#" class="show-text">…</a><div class="hidden-text">',
+            '<a href="#" class="show-text">…</a><div class="hidden-text">',
             content_2,
-            u'</div>'
+            '</div>'
         ]))
 
     return mark_safe(content_1)

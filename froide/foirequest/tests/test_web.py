@@ -1,4 +1,4 @@
-from __future__ import with_statement
+
 
 from django.utils.six import text_type as str
 from django.test import TestCase

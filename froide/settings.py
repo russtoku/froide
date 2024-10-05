@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+
 
 from configurations import Configuration, importer, values
 importer.install(check_options=True)
@@ -369,8 +369,8 @@ class Base(Configuration):
         currency="Euro",
         default_law=1,
         search_engine_query="http://www.google.de/search?as_q=%(query)s&as_epq=&as_oq=&as_eq=&hl=en&lr=&cr=&as_ft=i&as_filetype=&as_qdr=all&as_occt=any&as_dt=i&as_sitesearch=%(domain)s&as_rights=&safe=images",
-        greetings=[rec(u"Dear (?:Mr\.?|Ms\.? .*?)")],
-        closings=[rec(u"Sincerely yours,?")],
+        greetings=[rec("Dear (?:Mr\.?|Ms\.? .*?)")],
+        closings=[rec("Sincerely yours,?")],
         public_body_boosts={},
         dryrun=False,
         request_throttle=None,  # Set to [(15, 7 * 24 * 60 * 60),] for 15 requests in 7 days
@@ -469,8 +469,8 @@ class Test(Base):
         config.update(dict(
             doc_conversion_call_func=self._fake_convert_pdf,
             default_law=10000,
-            greetings=[rec(u"Dear ((?:Mr\.?|Ms\.?) .*),?"), rec(u'Sehr geehrter? ((Herr|Frau) .*),?')],
-            closings=[rec(u"Sincerely yours,?"), rec(u'Mit freundlichen Grüßen')],
+            greetings=[rec("Dear ((?:Mr\.?|Ms\.?) .*),?"), rec('Sehr geehrter? ((Herr|Frau) .*),?')],
+            closings=[rec("Sincerely yours,?"), rec('Mit freundlichen Grüßen')],
             public_body_officials_public=False
         ))
         return config
@@ -554,15 +554,15 @@ class German(object):
             "payment_possible": True,
             "currency": "Euro",
             "public_body_boosts": {
-                u"Oberste Bundesbeh\xf6rde": 1.9,
-                u"Obere Bundesbeh\xf6rde": 1.1,
-                u"Ministerium": 1.8,
-                u"Senatsverwaltung": 1.8,
-                u"Kommunalverwaltung": 1.7,
-                u"Andere": 0.8
+                "Oberste Bundesbeh\xf6rde": 1.9,
+                "Obere Bundesbeh\xf6rde": 1.1,
+                "Ministerium": 1.8,
+                "Senatsverwaltung": 1.8,
+                "Kommunalverwaltung": 1.7,
+                "Andere": 0.8
             },
-            'greetings': [rec(u"Sehr geehrt(er? (?:Herr|Frau)(?: ?Dr\.?)?(?: ?Prof\.?)? .*)")],
-            'closings': [rec(u"Mit freundlichen Gr\xfc\xdfen,?"), rec("Mit den besten Gr\xfc\xdfen,?")]
+            'greetings': [rec("Sehr geehrt(er? (?:Herr|Frau)(?: ?Dr\.?)?(?: ?Prof\.?)? .*)")],
+            'closings': [rec("Mit freundlichen Gr\xfc\xdfen,?"), rec("Mit den besten Gr\xfc\xdfen,?")]
         })
         return german_config
 

@@ -157,7 +157,7 @@ class PublicBodyResource(ModelResource):
                 return None
 
             sqs = sorted(sqs, key=lambda x: x.name)
-            names = [u"%s (%s)" % (x.name, jur_get(x)) for x in sqs]
+            names = ["%s (%s)" % (x.name, jur_get(x)) for x in sqs]
             data = [{"name": x.name, "jurisdiction": jur_get(x),
                      "id": x.pk, "url": x.url} for x in sqs]
         response = {

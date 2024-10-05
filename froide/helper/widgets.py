@@ -28,8 +28,8 @@ class AgreeCheckboxInput(forms.CheckboxInput):
 
     def render(self, name, value, attrs=None):
         html = super(AgreeCheckboxInput, self).render(name, value, attrs)
-        return mark_safe(u'<label>%s %s</label>' % (html, self.agree_to %
-                dict([(k, reverse(v)) for k, v in self.url_names.items()])))
+        return mark_safe('<label>%s %s</label>' % (html, self.agree_to %
+                dict([(k, reverse(v)) for k, v in list(self.url_names.items())])))
 
 
 class TagAutocompleteTagIt(TextInput):
@@ -56,7 +56,7 @@ class TagAutocompleteTagIt(TextInput):
         # custom css can also be overriden in settings
         css_list = getattr(settings, 'TAGGING_AUTOCOMPLETE_CSS', ['%scss/ui-autocomplete-tag-it.css' % js_base_url])
         # check is a list, if is a string convert it to a list
-        if type(css_list) != list and type(css_list) == str:
+        if not isinstance(css_list, list) and isinstance(css_list, str):
             css_list = [css_list]
         css = {
             'screen': css_list
@@ -88,7 +88,7 @@ class TagAutocompleteTagIt(TextInput):
         animate = 'true' if getattr(settings, 'TAGGING_AUTOCOMPLETE_ANIMATE', True) else 'false'
         html = super(TagAutocompleteTagIt, self).render(name, value, attrs)
         # Subclass this field in case you need to add some custom behaviour like custom callbacks
-        js = u"""<script type="text/javascript">window.init_jQueryTagit = window.init_jQueryTagit || [];
+        js = """<script type="text/javascript">window.init_jQueryTagit = window.init_jQueryTagit || [];
                 window.init_jQueryTagit.push({{
                     objectId: '{objectid}',
                     sourceUrl: '{sourceurl}',

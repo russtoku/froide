@@ -20,7 +20,7 @@ class TestTextReplacement(TestCase):
         self.assertEqual(content, 'This is a very long string with a name REPLACEMENT it')
 
     def test_remove_closing(self):
-        content = u'''
+        content = '''
 Sehr geehrte Frau Müller,
 
 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
@@ -33,12 +33,12 @@ More stuff here
         '''
 
         closings = [
-            rec(u"[Mm]it( den)? (freundliche(n|m)|vielen|besten) Gr(ü|u)(ß|ss)(en)?,?"),
+            rec("[Mm]it( den)? (freundliche(n|m)|vielen|besten) Gr(ü|u)(ß|ss)(en)?,?"),
             rec("Hochachtungsvoll,?"),
             rec('i\. ?A\.'), rec('[iI]m Auftrag')
         ]
         removed = remove_closing(content, closings)
-        self.assertNotIn(u'Peter Parker', removed)
+        self.assertNotIn('Peter Parker', removed)
 
 
 @override_settings(

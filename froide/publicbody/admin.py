@@ -51,7 +51,7 @@ class PublicBodyAdmin(admin.ModelAdmin, AdminTagAllMixIn):
         from haystack import connections as haystack_connections
 
         for obj in queryset:
-            for using in haystack_connections.connections_info.keys():
+            for using in list(haystack_connections.connections_info.keys()):
                 backend = haystack_connections[using].get_backend()
                 backend.remove(obj)
 

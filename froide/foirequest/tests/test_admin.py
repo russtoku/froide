@@ -1,4 +1,4 @@
-from __future__ import with_statement
+
 
 from django.test import TestCase
 from django.contrib.admin.sites import AdminSite
@@ -81,7 +81,7 @@ class AdminActionTest(TestCase):
         frs[1] = FoiRequest.objects.get(id=frs[1].id)
         self.assertEqual(frs[0].tags.count(), 2)
         self.assertEqual(frs[1].tags.count(), 2)
-        self.assertEqual(set([t.name for t in frs[0].tags.all()]), set(['one', 'two']))
+        self.assertEqual({t.name for t in frs[0].tags.all()}, {'one', 'two'})
 
     def check_attribute_change_action(self, klass, factory,
          admin_action, attr, initial, final,

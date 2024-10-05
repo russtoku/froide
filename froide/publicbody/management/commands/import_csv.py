@@ -24,4 +24,4 @@ class Command(BaseCommand):
         else:
             importer.import_from_file(open(filename, 'rb'))
 
-        self.stdout.write(u"Import done.\n")
+        self.stdout.write("Import done.\n")

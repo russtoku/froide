@@ -78,7 +78,7 @@ class PublicBodyFactory(factory.DjangoModelFactory):
     class Meta:
         model = PublicBody
 
-    name = factory.Sequence(lambda n: u'Pübli€ Body {0}'.format(random_name()))
+    name = factory.Sequence(lambda n: 'Pübli€ Body {0}'.format(random_name()))
     slug = factory.LazyAttribute(lambda o: slugify(o.name))
     description = ''
     url = 'http://example.com'

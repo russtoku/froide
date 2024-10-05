@@ -4,7 +4,7 @@ import datetime
 try:
     from urllib.parse import urlencode
 except ImportError:
-    from urllib import urlencode
+    from urllib.parse import urlencode
 
 from django.utils.six import text_type as str
 from django.test import TestCase
@@ -70,8 +70,7 @@ class AccountTest(TestCase):
         response = self.client.post(reverse('account-logout'))
         self.assertEqual(response.status_code, 302)
         response = self.client.get(reverse('account-login') + "?simple")
-        self.assertIn("simple_base.html", map(lambda x: x.name,
-                response.templates))
+        self.assertIn("simple_base.html", [x.name for x in response.templates])
         response = self.client.post(reverse('account-login') + "?simple",
                 {"email": "mail@stefanwehrmeyer.com",
                 "password": "froide"})
@@ -174,9 +173,9 @@ class AccountTest(TestCase):
 
     def test_confirmation_process(self):
         self.client.logout()
-        user, password = AccountManager.create_user(first_name=u"Stefan",
-                last_name=u"Wehrmeyer", user_email="sw@example.com",
-                address=u"SomeRandomAddress\n11234 Bern", private=True)
+        user, password = AccountManager.create_user(first_name="Stefan",
+                last_name="Wehrmeyer", user_email="sw@example.com",
+                address="SomeRandomAddress\n11234 Bern", private=True)
         AccountManager(user).send_confirmation_mail(password=password)
         self.assertEqual(len(mail.outbox), 1)
         message = mail.outbox[0]

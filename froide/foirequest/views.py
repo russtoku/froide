@@ -73,7 +73,7 @@ def dashboard(request):
         d = u.date_joined.date().isoformat()
         user.setdefault(d, 0)
         user[d] += 1
-    context['user'] = sorted([{'date': k, 'num': v, 'symbol': 'user'} for k, v in user.items()], key=lambda x: x['date'])
+    context['user'] = sorted([{'date': k, 'num': v, 'symbol': 'user'} for k, v in list(user.items())], key=lambda x: x['date'])
     total = 0
     for user in context['user']:
         total += user['num']
@@ -92,7 +92,7 @@ def dashboard(request):
         d = u.first_message.date().isoformat()
         foirequest.setdefault(d, 0)
         foirequest[d] += 1
-    context['foirequest'] = sorted([{'date': k, 'num': v, 'symbol': 'user'} for k, v in foirequest.items()], key=lambda x: x['date'])
+    context['foirequest'] = sorted([{'date': k, 'num': v, 'symbol': 'user'} for k, v in list(foirequest.items())], key=lambda x: x['date'])
     total = 0
     for req in context['foirequest']:
         total += req['num']
@@ -228,16 +228,9 @@ def show(request, slug, template_name="foirequest/show.html",
         message.request = obj
         if message.not_publishable:
             obj.not_publishable_message = message
-        message.all_attachments = filter(
-            lambda x: x.belongs_to_id == message.id, all_attachments)
-        message.approved_attachments = filter(
-            lambda x: x.belongs_to_id == message.id and x.approved,
-            all_attachments
-        )
-        message.not_approved_attachments = filter(
-            lambda x: x.belongs_to_id == message.id and not x.approved,
-            all_attachments
-        )
+        message.all_attachments = [x for x in all_attachments if x.belongs_to_id == message.id]
+        message.approved_attachments = [x for x in all_attachments if x.belongs_to_id == message.id and x.approved]
+        message.not_approved_attachments = [x for x in all_attachments if x.belongs_to_id == message.id and not x.approved]
         for att in message.all_attachments:
             att.belongs_to = message
 
@@ -453,7 +446,7 @@ def submit_request(request, public_body=None):
             redirect_url = request_form.cleaned_data['redirect_url']
             if is_safe_url(redirect_url):
                 return redirect(redirect_url)
-        return redirect(u'%s%s' % (foi_request.get_absolute_url(), _('?request-made')))
+        return redirect('%s%s' % (foi_request.get_absolute_url(), _('?request-made')))
     else:
         AccountManager(user).send_confirmation_mail(request_id=foi_request.pk,
                 password=password)
@@ -849,7 +842,7 @@ def make_same_request(request, slug, message_id):
         messages.add_message(request, messages.ERROR, throttle_message)
         return render_400(request)
 
-    body = u"%s\n\n%s" % (foirequest.description,
+    body = "%s\n\n%s" % (foirequest.description,
             _('Please see this request on %(site_name)s where you granted access to this information: %(url)s') % {
                 'url': foirequest.get_absolute_domain_short_url(),
                 'site_name': settings.SITE_NAME

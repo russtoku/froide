@@ -59,7 +59,7 @@ class Jurisdiction(models.Model):
             kwargs={'slug': self.slug})
 
     def get_absolute_domain_url(self):
-        return u"%s%s" % (settings.SITE_URL, self.get_absolute_url())
+        return "%s%s" % (settings.SITE_URL, self.get_absolute_url())
 
 
 @python_2_unicode_compatible
@@ -88,7 +88,7 @@ class FoiLaw(models.Model):
                 ('month_de', _('Month(s) (DE)')),
             ))
     refusal_reasons = models.TextField(
-            _(u"Possible Refusal Reasons, one per line, e.g §X.Y: Privacy Concerns"),
+            _("Possible Refusal Reasons, one per line, e.g §X.Y: Privacy Concerns"),
             blank=True)
     mediator = models.ForeignKey('PublicBody', verbose_name=_("Mediator"),
             null=True, blank=True,
@@ -104,13 +104,13 @@ class FoiLaw(models.Model):
         verbose_name_plural = _("Freedom of Information Laws")
 
     def __str__(self):
-        return u"%s (%s)" % (self.name, self.jurisdiction)
+        return "%s (%s)" % (self.name, self.jurisdiction)
 
     def get_absolute_url(self):
         return reverse('publicbody-foilaw-show', kwargs={'slug': self.slug})
 
     def get_absolute_domain_url(self):
-        return u"%s%s" % (settings.SITE_URL, self.get_absolute_url())
+        return "%s%s" % (settings.SITE_URL, self.get_absolute_url())
 
     @property
     def letter_start_form(self):
@@ -303,7 +303,7 @@ class PublicBody(models.Model):
             'address', 'domain')
 
     def __str__(self):
-        return u"%s (%s)" % (self.name, self.jurisdiction)
+        return "%s (%s)" % (self.name, self.jurisdiction)
 
     @property
     def created_by(self):
@@ -335,7 +335,7 @@ class PublicBody(models.Model):
         return reverse('publicbody-show', kwargs={"slug": self.slug})
 
     def get_absolute_domain_url(self):
-        return u"%s%s" % (settings.SITE_URL, self.get_absolute_url())
+        return "%s%s" % (settings.SITE_URL, self.get_absolute_url())
 
     def get_label(self):
         return mark_safe('%(name)s - <a href="%(url)s" class="target-new info-link">%(detail)s</a>' % {"name": escape(self.name), "url": self.get_absolute_url(), "detail": _("More Info")})

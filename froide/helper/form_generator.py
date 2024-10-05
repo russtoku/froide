@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 
 import re
 
@@ -37,7 +37,7 @@ class FormProcessor(object):
                     in_form = True
                 else:
                     if in_option and not output_option:
-                        line = u"%s %s" % (line, self.get_last_default_option())
+                        line = "%s %s" % (line, self.get_last_default_option())
                     line = line + "\n"
                     was_form = False
                 in_option = False

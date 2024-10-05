@@ -26,7 +26,7 @@ def send_notification_became_overdue(sender, **kwargs):
         return
     if not sender.user.email:
         return
-    send_mail(u'{0} [#{1}]'.format(
+    send_mail('{0} [#{1}]'.format(
                 _("%(site_name)s: Request became overdue") % {
                     "site_name": settings.SITE_NAME
                 },
@@ -47,7 +47,7 @@ def send_notification_became_asleep(sender, **kwargs):
         return
     if not sender.user.email:
         return
-    send_mail(u'{0} [#{1}]'.format(
+    send_mail('{0} [#{1}]'.format(
                 _("%(site_name)s: Request became asleep") % {
                     "site_name": settings.SITE_NAME
                 },
@@ -70,7 +70,7 @@ def notify_user_message_received(sender, message=None, **kwargs):
         return
     if not sender.user.email:
         return
-    send_mail(u'{0} [#{1}]'.format(
+    send_mail('{0} [#{1}]'.format(
                 _("%(site_name)s: New reply to your request") % {
                     "site_name": settings.SITE_NAME
                 },
@@ -91,7 +91,7 @@ def notify_user_message_received(sender, message=None, **kwargs):
         dispatch_uid="notify_user_public_body_suggested")
 def notify_user_public_body_suggested(sender, suggestion=None, **kwargs):
     if sender.user != suggestion.user:
-        send_mail(u'{0} [#{1}]'.format(
+        send_mail('{0} [#{1}]'.format(
                     _("%(site_name)s: New suggestion for a Public Body") % {
                         "site_name": settings.SITE_NAME
                     },
@@ -135,7 +135,7 @@ def send_foimessage_sent_confirmation(sender, message=None, **kwargs):
         subject = _("%(site_name)s: Your Message was sent")
         template = "foirequest/emails/confirm_foi_message_sent.txt"
     subject = subject % {"site_name": settings.SITE_NAME}
-    send_mail(u'{0} [#{1}]'.format(subject, sender.pk),
+    send_mail('{0} [#{1}]'.format(subject, sender.pk),
             render_to_string(template, {
                 "request": sender,
                 "message": message,
