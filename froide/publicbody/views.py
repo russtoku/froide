@@ -13,8 +13,7 @@ from froide.foirequest.models import FoiRequest
 from froide.helper.utils import render_400, render_403
 from froide.helper.cache import cache_anonymous_page
 
-from .models import (PublicBody,
-    PublicBodyTag, FoiLaw, Jurisdiction)
+from .models import (PublicBody, PublicBodyTag, FoiLaw, Jurisdiction)
 from .csv_import import CSVImporter
 
 
@@ -38,6 +37,8 @@ def index(request, jurisdiction=None, topic=None):
                 jurisdiction=jurisdiction.name if query else jurisdiction)
 
     page = request.GET.get('page')
+    if not page:
+        page = 1
     paginator = Paginator(publicbodies, 50)
     try:
         publicbodies = paginator.page(page)
