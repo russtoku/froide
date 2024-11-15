@@ -26,7 +26,7 @@ def random_name(num=10):
     return ''.join([random.choice(string.ascii_lowercase) for _ in range(num)])
 
 
-class SiteFactory(factory.DjangoModelFactory):
+class SiteFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Site
 
@@ -34,7 +34,7 @@ class SiteFactory(factory.DjangoModelFactory):
     domain = factory.Sequence(lambda n: 'domain%s.example.com' % n)
 
 
-class UserFactory(factory.DjangoModelFactory):
+class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = get_user_model()
 
@@ -55,7 +55,7 @@ class UserFactory(factory.DjangoModelFactory):
     organization_url = ''
 
 
-class JurisdictionFactory(factory.DjangoModelFactory):
+class JurisdictionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Jurisdiction
 
@@ -66,7 +66,7 @@ class JurisdictionFactory(factory.DjangoModelFactory):
     rank = factory.Sequence(lambda n: n)
 
 
-class PublicBodyTagFactory(factory.DjangoModelFactory):
+class PublicBodyTagFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = PublicBodyTag
 
@@ -74,7 +74,7 @@ class PublicBodyTagFactory(factory.DjangoModelFactory):
     slug = factory.LazyAttribute(lambda o: slugify(o.name))
 
 
-class PublicBodyFactory(factory.DjangoModelFactory):
+class PublicBodyFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = PublicBody
 
@@ -104,7 +104,7 @@ class PublicBodyFactory(factory.DjangoModelFactory):
     jurisdiction = factory.SubFactory(JurisdictionFactory)
 
 
-class FoiLawFactory(factory.DjangoModelFactory):
+class FoiLawFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = FoiLaw
 
@@ -129,7 +129,7 @@ class FoiLawFactory(factory.DjangoModelFactory):
     site = factory.SubFactory(SiteFactory)
 
 
-class FoiRequestFactory(factory.DjangoModelFactory):
+class FoiRequestFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = FoiRequest
 
@@ -165,7 +165,7 @@ class FoiRequestFactory(factory.DjangoModelFactory):
     site = factory.SubFactory(SiteFactory)
 
 
-class DeferredMessageFactory(factory.DjangoModelFactory):
+class DeferredMessageFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = DeferredMessage
 
@@ -180,12 +180,12 @@ Date: Mon, 5 Jul 2010 07:54:40 +0200
 Test'''))
 
 
-class PublicBodySuggestionFactory(factory.DjangoModelFactory):
+class PublicBodySuggestionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = PublicBodySuggestion
 
 
-class FoiMessageFactory(factory.DjangoModelFactory):
+class FoiMessageFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = FoiMessage
 
@@ -218,7 +218,7 @@ class FoiMessageFactory(factory.DjangoModelFactory):
     not_publishable = False
 
 
-class FoiAttachmentFactory(factory.DjangoModelFactory):
+class FoiAttachmentFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = FoiAttachment
 
@@ -232,7 +232,7 @@ class FoiAttachmentFactory(factory.DjangoModelFactory):
     approved = True
 
 
-class FoiEventFactory(factory.DjangoModelFactory):
+class FoiEventFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = FoiEvent
 

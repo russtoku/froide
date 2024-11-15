@@ -12,6 +12,8 @@ from froide.foirequest.tests import factories
 from froide.foirequest.models import FoiRequest
 from froide.publicbody.models import PublicBody
 
+from unittest import skip
+
 User = get_user_model()
 
 
@@ -50,6 +52,7 @@ class CheckJSErrors(object):
             raise JavaScriptException(msg)
 
 
+@skip("Requires Selenium configuration")
 class TestMakingRequest(StaticLiveServerTestCase):
 
     @classmethod
