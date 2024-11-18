@@ -220,7 +220,9 @@
 import 'string.prototype.repeat'
 import ConfirmNoRedaction from './confirm-no-redaction'
 
-import PDFJSWorkerUrl from 'pdfjs-dist/build/pdf.worker.js?url'
+import * as pdfjs from 'pdfjs-dist/build/pdf';
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker', import.meta.url);
 
 import range from 'lodash.range'
 
