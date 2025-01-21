@@ -53,13 +53,13 @@ class UserChangeForm(DjangoUserChangeForm):
 
 ADDRESS_REQUIRED_HELP_TEXT = _(
     "Your address will not be displayed "
-    "publicly and is only needed because a public body "
+    "publicly and is only needed because a public agency "
     "will likely want to send you paper."
 )
 
 ADDRESS_HELP_TEXT = _(
     "Your address will not be displayed "
-    "publicly and is only needed in case a public body "
+    "publicly and is only needed in case a public agency "
     "needs to send you paper."
 )
 
@@ -142,7 +142,7 @@ class NewUserBaseForm(AddressBaseForm):
             label=_("Hide my name from public view"),
             help_text=format_html(
                 _(
-                    "If you check this, your name will still appear in requests to public bodies, but we will do our best to not display it publicly. However, we cannot guarantee your anonymity"
+                    "If you check this, your name will still appear in requests to public agencies, but we will do our best to not display it publicly. However, we cannot guarantee your anonymity"
                 )
             ),
         )
